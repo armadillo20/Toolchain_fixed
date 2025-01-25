@@ -1,4 +1,5 @@
 import asyncio
+from solana.rpc.async_api import AsyncClient
 from solana.transaction import Transaction
 from solders.keypair import Keypair
 from solders.pubkey import Pubkey
@@ -16,7 +17,7 @@ async def main():
     bet_info_seeds = [bytes(participant1.pubkey()), bytes(participant2.pubkey())]
 
     # Calcola il BetInfo PDA
-    program_id = Pubkey.from_string("7mMf8y3WnKREkqkUG96viUvsMfpwfaPHqxBSxbMUMJQN")
+    program_id = Pubkey.from_string("56k9cTd2cv1X7RzMG3rzK1V8s8xzXDtHTsPKFQyoiQAt")
     bet_info, _ = Pubkey.find_program_address(bet_info_seeds, program_id)
 
     # Prepara l'istruzione win
@@ -35,6 +36,11 @@ async def main():
 
     # Configura il provider
     provider = Provider.local()
+
+    # Configura il client per connetterti alla Devnet
+    rpc_url = "https://api.devnet.solana.com"
+    connection = AsyncClient(rpc_url)
+    provider = Provider(connection, wallet)
 
     # Firma e invia la transazione
     wallet.sign_transaction(tx)
