@@ -22,11 +22,29 @@ async def get_account_balance(user, pubkey):
     resp = await user.get_balance(pubkey)
     return resp.value
 
-
-async def check_all_accounts(user, accounts):
+async def check_account_balance(user, accounts):
     for account in accounts:
         balance = await get_account_balance(user, account.pubkey())
         print(f"Account {account.pubkey()} balance: {balance} SOL")
+
+async def measure_transaction_size(transaction):
+    serialized_tx = transaction.serialize()
+    size_in_bytes = len(serialized_tx)
+    print(f"Transaction size: {size_in_bytes} bytes")
+    return size_in_bytes
+
+async def compute_transaction_fee(user, transaction):
+    # Ottieni il messaggio della transazione
+    tx_message = transaction.compile_message()
+
+    # Usa `get_fee_for_message` per calcolare la fee
+    response = await user.get_fee_for_message(tx_message)
+    if response.value:
+        print(f"Transaction fee: {response.value} lamports")
+        return response.value
+    else:
+        print("Failed to fetch fee information")
+        return None
 
 async def join_function():
     # Prepara l'istruzione join
@@ -47,13 +65,15 @@ async def join_function():
     tx = Transaction().add(join_ix)
 
     # Prendi l'ultimo blockhash
-    recent_blockhash = await get_recent_blockhash(client)
-    tx.recent_blockhash = recent_blockhash
+    tx.recent_blockhash = await get_recent_blockhash(client)
 
     # Sign transaction
     tx.sign(participant1, participant2)
-    participant1_wallet.sign_transaction(tx)
-    participant2_wallet.sign_transaction(tx)
+
+    # Analisi spazio disco
+    tx_size = await measure_transaction_size(tx)
+    # Calcolo fee
+    tx_fee = await compute_transaction_fee(client, tx)
 
     # Prepare provider and send transaction
     participant1_provider = Provider(client, participant1_wallet)
@@ -76,13 +96,17 @@ async def win_function():
     tx = Transaction().add(win_ix)
 
     # Prendi l'ultimo blockhash
-    recent_blockhash = await get_recent_blockhash(client)
-    tx.recent_blockhash = recent_blockhash
-
-    oracle_provider = Provider(client, oracle_wallet)
+    tx.recent_blockhash = await get_recent_blockhash(client)
 
     # Firma e invia la transazione per win
     oracle_wallet.sign_transaction(tx)
+
+    # Analisi spazio disco
+    tx_size = await measure_transaction_size(tx)
+    # Calcolo fee
+    tx_fee = await compute_transaction_fee(client, tx)
+
+    oracle_provider = Provider(client, oracle_wallet)
     await oracle_provider.send(tx)
 
 
@@ -111,7 +135,7 @@ if __name__ == "__main__":
     choice = 1
 
     if choice == 1:
-        asyncio.run(check_all_accounts(client, [participant1, participant2, oracle]))
+        asyncio.run(check_account_balance(client, [participant1, participant2, oracle]))
     elif choice == 2:
         asyncio.run(join_function())
     elif choice == 3:
