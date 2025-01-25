@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_lang::system_program;
 
-declare_id!("7mMf8y3WnKREkqkUG96viUvsMfpwfaPHqxBSxbMUMJQN");
+declare_id!("56k9cTd2cv1X7RzMG3rzK1V8s8xzXDtHTsPKFQyoiQAt");
 
 #[program]
 pub mod bet {
