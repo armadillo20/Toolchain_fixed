@@ -5,7 +5,7 @@ First:
 - Airdrop the wallet (to pay transaction fees). You can do that at this link: https://faucet.solana.com
 
 
-Launch main.py, then 3 possibilities are given:
+To execute the tool, launch main.py, then 3 possibilities are given:
 1. Compile and eventually deploy new anchor programs
   - Put your Anchor programs in .rs format inside the "anchor_programs" folder in the main root of the tool.
   - Put your Solana wallet inside the "solana_wallets" folder in the main root
