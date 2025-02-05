@@ -1,5 +1,5 @@
 First:
-- Install solana and anchor on your terminal. Here is the guide to install them: https://solana.com/it/docs/intro/installation . Do not install the last version of Anchor, version 0.29.0 MUST be installed.
+- Install solana and anchor on your terminal. Here is the guide to install them: https://solana.com/it/docs/intro/installation. Do not install the last version of Anchor, version 0.29.0 MUST be installed.
 - Install the tools required in the requirements.py file (Please let me know if someone is missing)
 - Create at least one Solana wallet
 - Airdrop the wallet (to pay transaction fees). You can do that at this link: https://faucet.solana.com
