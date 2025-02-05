@@ -1,2 +1,5 @@
 .venv
 .idea
+.anchor_files
+solana_wallet/*
+anchor_programs/*
