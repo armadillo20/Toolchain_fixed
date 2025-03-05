@@ -13,6 +13,8 @@ from solana.rpc.async_api import AsyncClient
 from solana.transaction import Transaction
 from solders.keypair import Keypair
 from solders.pubkey import Pubkey
+from solders.message import MessageV0
+from solders.transaction import VersionedTransaction
 from anchorpy import Provider, Wallet
 
 
@@ -127,7 +129,7 @@ def manage_cluster_setting(cluster):
         rpc_url = "https://api.mainnet-beta.solana.com"
 
     client = AsyncClient(rpc_url)
-    return  client
+    return client
 
 def find_required_accounts(instruction, idl):
     # Find the instruction in the IDL
@@ -366,19 +368,35 @@ async def make_transaction(program, instruction, accounts, signer_account_keypai
     function = import_function(program, instruction)
     ix = prepare_function(accounts, args, function)
 
-    # Create transaction
-    tx = Transaction().add(ix)
-
-    # Get latest blockhash
-    tx.recent_blockhash = await get_latest_blockhash(client)
-
     # If signature is required, sign transaction with signer_accounts
     keypairs = list(signer_account_keypairs.values())
-    tx.sign(*keypairs)
+    if keypairs:
+        # Create transaction
+        tx = Transaction().add(ix)
 
-    # Compute transaction size and fee
-    await measure_transaction_size(tx)
-    await compute_transaction_fee(client, tx)
+        # Get latest blockhash
+        tx.recent_blockhash = await get_latest_blockhash(client)
+
+        # If signature is required, sign transaction with signer_accounts
+        keypairs = list(signer_account_keypairs.values())
+        tx.sign(*keypairs)
+
+        # Compute transaction size and fee
+        await measure_transaction_size(tx)
+        await compute_transaction_fee(client, tx)
+    else:
+        msg = MessageV0.try_compile(
+            payer=provider.wallet.payer.pubkey(),
+            instructions=[ix],
+            address_lookup_table_accounts=[],
+            recent_blockhash=await get_latest_blockhash(client)
+        )
+
+        tx = VersionedTransaction(msg, [provider.wallet.payer])
+
+        # Compute versioned transaction size and fee
+        await measure_versioned_transaction_size(tx)
+        await compute_versioned_transaction_fee(client, tx)
 
     # Send transaction
     await provider.send(tx)
@@ -446,6 +464,26 @@ async def compute_transaction_fee(client, transaction):
     tx_message = transaction.compile_message()
 
     # Compute fee from message
+    response = await client.get_fee_for_message(tx_message)
+    if response.value:
+        print(f"Transaction fee: {response.value} lamports")
+        return response.value
+    else:
+        print("Failed to fetch fee information")
+        return None
+
+async def measure_versioned_transaction_size(transaction):
+    # Manually serialize transaction
+    serialized_tx = bytes(transaction)
+    size_in_bytes = len(serialized_tx)
+    print(f"Transaction size: {size_in_bytes} bytes")
+    return size_in_bytes
+
+async def compute_versioned_transaction_fee(client, transaction):
+    # Ottenere il messaggio dalla VersionedTransaction
+    tx_message = transaction.message
+
+    # Calcolare la commissione dalla rete
     response = await client.get_fee_for_message(tx_message)
     if response.value:
         print(f"Transaction fee: {response.value} lamports")

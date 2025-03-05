@@ -83,10 +83,16 @@ def run_compiling_commands_macos_linux(setup_concatenated_command, build_concate
 
     print("Building Anchor program, this may take a while... Please be patient.")
     write_program_in_lib_rs(program_name, program)
-    impose_cargo_lock_version(program_name)
     result = subprocess.run(build_concatenated_command, shell=True, capture_output=True, text=True)
     if result.stderr:
-        print(result.stderr)
+        # try by imposing cargo version 3
+        try:
+            impose_cargo_lock_version(program_name)
+            result = subprocess.run(build_concatenated_command, shell=True, capture_output=True, text=True)
+            if result.stderr:
+                print(result.stderr)
+        except:
+            Exception('Error while building Anchor program')
 
 def write_program_in_lib_rs(program_name, program):
     program = update_program_id(program_name, program)
