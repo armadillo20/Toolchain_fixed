@@ -1,5 +1,5 @@
 import asyncio
-from run_initialized_programs_functions import load_keypair_from_file, manage_cluster_setting
+from interactive_data_insertion_manager import load_keypair_from_file, manage_cluster_setting
 
 def choose_wallet():
     print(f"Place wallet in the solana_wallets folder")

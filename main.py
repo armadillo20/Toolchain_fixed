@@ -1,12 +1,12 @@
-from program_initialization_functions import *
-from run_initialized_programs_functions import *
-from check_account_balance import *
+from program_compiler_and_deployer import *
+from interactive_data_insertion_manager import *
+from account_balance_manager import *
 
 
 if __name__ == "__main__":
     # Path where anchor programs are placed
     programs_path = "anchor_programs"
-    allowed_choices = ["1", "2", "0"]
+    allowed_choices = ["1", "2", "3" "0"]
 
     # Interactive menu
     choice = None
@@ -14,7 +14,7 @@ if __name__ == "__main__":
         # Print options
         print("What you wanna do?")
         print(f"1. Compile new program(s) (Place .rs files in {programs_path} folder)")
-        print(f"2. Run program (Only anchorpy initialized programs)")
+        print("2. Run program (Only anchorpy initialized programs)")
         print("3. Check account balance")
         print("0. Exit")
 

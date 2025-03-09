@@ -3,3 +3,4 @@
 .anchor_files
 solana_wallet/*
 anchor_programs/*
+execution_traces/*

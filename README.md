@@ -20,6 +20,5 @@ To execute the tool, launch main.py, then 3 possibilities are given:
 Please note:
 - Compiling may take a while, please be patient
 - At the moment, if you make a wrong choice in the menu, you can't go back. Sorry, if that happens, restart the program and re-insert required data
-- The tool still doesn't work with functions which do not require signers (e.g. timeout function of bet contract)
 - At the moment, the tool can only deal with classical parameter types (e.g. uint, int, float, string) and arrays. It can't deal with structs or other complex parameter types
 - The tool has been tested only on bet and htlc smart contracts
