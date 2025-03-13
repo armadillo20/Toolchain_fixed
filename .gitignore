@@ -2,5 +2,5 @@
 .idea
 .anchor_files
 solana_wallet/*
-anchor_programs/*
-execution_traces/*
+solana_module/anchor_module/anchor_programs/*
+solana_module/anchor_module/execution_traces/*

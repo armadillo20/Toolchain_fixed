@@ -2,7 +2,7 @@ import csv
 import os
 
 def read_csv():
-    with open('./execution_traces/file.csv', mode='r') as file:
+    with open('solana_modul/anchor_modul/execution_traces/file.csv', mode='r') as file:
         csv_reader = csv.reader(file)
         for row in csv_reader:
             print(row)  # Ogni 'row' è una lista di valori
