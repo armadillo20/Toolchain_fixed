@@ -22,15 +22,19 @@
 
 
 import json
+import os
 from solders.keypair import Keypair
 from solana.rpc.async_api import AsyncClient
 
 solana_base_path = "solana_module"
 
 def load_keypair_from_file(file_path):
-    with open(file_path, 'r') as f:
-        data = json.load(f)
-        return Keypair.from_bytes(data)
+    if os.path.exists(file_path):
+        with open(file_path, 'r') as f:
+            data = json.load(f)
+            return Keypair.from_bytes(data)
+    else:
+        return None
 
 def create_client(cluster):
     # Define rpc basing on the cluster

@@ -30,6 +30,8 @@ import string
 import importlib
 import importlib.util
 import asyncio
+
+from based58 import b58encode
 from solders.pubkey import Pubkey
 from anchorpy import Provider, Wallet
 from solana_module.utils import create_client
@@ -86,11 +88,11 @@ def _find_initialized_programs():
 def _choose_program_to_run(program_names):
     # Generate list of numbers corresponding to the number of found programs
     allowed_choices = list(map(str, range(1, len(program_names) + 1))) + ['0']
-    choice = None
     repeat = True
 
     # Repeat is needed to manage the going back from the following menus
     while repeat:
+        choice = None
         # Print available programs
         while choice not in allowed_choices:
             print("Which program do you want to run?")
@@ -146,8 +148,12 @@ def _choose_instruction_to_run(instructions, idl, program_name):
             print("0) Back to program selection")
             choice = input()
 
-        # Run chosen program
-        repeat = _preselect_pda_accounts(program_name, instructions[int(choice) - 1], idl)
+        if choice == '0':
+            return True
+        else:
+            # Run chosen program
+            repeat = _preselect_pda_accounts(program_name, instructions[int(choice) - 1], idl)
+            choice = None
 
     return False # Needed to come back to main menu after finishing
 
@@ -170,7 +176,7 @@ def _preselect_pda_accounts(program_name, instruction, idl):
     # Manage pda account pre-selection
     while repeat:
         # Print required accounts
-        print("Required accounts to be inserted.")
+        print("Required accounts to be inserted:")
         for account in required_accounts:
             print(f"- {account}")
         print('Press enter to continue...')
@@ -179,8 +185,8 @@ def _preselect_pda_accounts(program_name, instruction, idl):
         # Manage annotation of PDA accounts
         allowed_choices = ['1', '2', '0']
         choice = None
-        print("Please choose:")
         while choice not in allowed_choices:
+            print("Please choose:")
             print("1) Continue")
             print("2) Some of these account is a PDA")
             print("0) Back to instruction selection")
@@ -230,7 +236,7 @@ def _annotate_pda_account(required_accounts, pda_accounts):
         print("0) Go back")
         choice = input()
         if choice == "0":
-            return None, None # Needed to come back
+            return required_accounts, pda_accounts # Needed to come back
 
     pda_accounts.append(required_accounts[int(choice) - 1])
     required_accounts.pop(int(choice) - 1)
@@ -255,6 +261,9 @@ def _setup_required_accounts(required_accounts, instruction, idl, pda_accounts, 
             if choice == '1':
                 # Add the public key extracted from the wallet in the final_account dict
                 keypair = load_keypair_from_file(f"{solana_base_path}/solana_wallets/{required_account}_wallet.json")
+                if keypair is None:
+                    print("Wallet not found.")
+                    continue
                 final_accounts[required_account] = keypair.pubkey()
 
                 # If it is a signer account, save its keypair into signer_accounts_keypairs
@@ -272,6 +281,10 @@ def _setup_required_accounts(required_accounts, instruction, idl, pda_accounts, 
                 print('Please choose a valid choice.')
 
         repeat = _setup_pda_accounts(pda_accounts, final_accounts, program_name, instruction, idl, cluster, final_accounts, signer_accounts_keypairs)
+        if i != 0:
+            i -= 1 # Necessary to come back
+        else:
+            return True
 
     return False
 
@@ -318,10 +331,10 @@ def _manage_pda_account_creation(final_accounts, program, pda_account):
 
     pda_key = ''
     allowed_choices = ['1','2','3','0']
-    choice = None
 
     repeat = True
     while repeat:
+        choice = None
         print(f"Working with {pda_account} PDA account")
         while choice not in allowed_choices:
             print("How do you want to generate the PDA account?")
@@ -332,10 +345,19 @@ def _manage_pda_account_creation(final_accounts, program, pda_account):
             choice = input()
             if choice == "1":
                 while len(pda_key) != 44:
-                    print("Insert PDA key. It must be 44 characters long.")
+                    print("Insert PDA key. It must be 44 characters long. (Insert 0 to go back)")
                     pda_key = input()
+                    if pda_key == '0':
+                        choice = None
+                        break
+                    else:
+                        pda_key = Pubkey.from_string(pda_key)
             elif choice == "2":
-                pda_key = ''.join(random.choices(string.ascii_letters + string.digits, k=44))
+                random_bytes = os.urandom(32)
+                base58_str = b58encode(random_bytes).decode("utf-8")
+                pda_key = Pubkey.from_string(base58_str)
+                print(f'Extracted pda is: {pda_key}')
+                repeat = False
             elif choice == "3":
                 pda_key, repeat = _choose_number_of_seed(final_accounts, program_id)
             elif choice == "0":
@@ -348,7 +370,7 @@ def _choose_number_of_seed(final_accounts, program_id):
     repeat = True
 
     while repeat:
-        print("How many seeds do you want to use? (Insert 0 to come back)")
+        print("How many seeds do you want to use? (Insert 0 to go back)")
         n_seeds = int(input())
         if n_seeds == 0:
             return None, True
@@ -373,14 +395,19 @@ def _manage_seed_insertion(n_seeds, final_accounts, program_id):
             choice = input()
             if choice == "1":
                 seed = ''
-                while len(seed) != 44:
-                    print("Insert seed. It must be 44 characters long.")
+                while len(seed) != 32:
+                    print("Insert seed. It must be 32 characters long. (Insert 0 to go back)")
                     seed = input()
+                    if seed == '0':
+                        choice = None
+                        break
                 seeds[i] = bytes(seed, 'utf-8')
+                i += 1
             elif choice == "2":
-                seed = (''.join(random.choices(string.ascii_letters + string.digits, k=44)))
-                print(f'Extracted seed is: {seed}')
-                seeds[i] = bytes(seed, 'utf-8')
+                seed = os.urandom(32)
+                print(f'Extracted seed (hex): {seed.hex()}')
+                seeds[i] = seed
+                i += 1
             elif choice == "3":
                 if final_accounts.items():
                     seed, repeat = _manage_seed_generation_from_account(final_accounts)
@@ -423,12 +450,11 @@ def _manage_seed_generation_from_account(final_accounts):
 
 def _setup_args(instruction, idl, cluster, program_name, accounts, signer_account_keypairs):
     required_args = find_args(instruction, idl)
-    args, repeat = manage_args(required_args)
+    repeat = manage_args(required_args, cluster, program_name, instruction, accounts, signer_account_keypairs)
     if repeat:
         return True
-
-    manage_provider(cluster, program_name, instruction, accounts, args, signer_account_keypairs)
-    return False
+    else:
+        return False
 
 def find_args(instruction, idl):
     # Find instruction
@@ -439,54 +465,70 @@ def find_args(instruction, idl):
 
     return required_args
 
-def manage_args(args):
+def manage_args(args, cluster, program_name, instruction, accounts, signer_account_keypairs):
     final_args = dict()
-    value = ''
-
+    repeat = True
     i = 0
-    while i < len(args):
-        arg = args[i]
-        print(f"Insert {arg['name']} value. ", end="", flush=True)
 
-        # Arrays management
-        if isinstance(arg['type'], dict) and 'array' in arg['type']:
-            array_type = arg['type']['array'][0]
-            array_length = arg['type']['array'][1]
-            print(f"It is an array of {check_type(array_type)} type and length {array_length}. Please insert array values separated by spaces (Insert 00 to go back to previous section).")
-            value = input()
-            if value == '00':
-                if i == 0:
-                    return None, True
+    while repeat:
+        while i < len(args):
+            arg = args[i]
+            print(f"Insert {arg['name']} value. ", end="", flush=True)
+
+            # Arrays management
+            if isinstance(arg['type'], dict) and 'array' in arg['type']:
+                array_type = arg['type']['array'][0]
+                array_length = arg['type']['array'][1]
+                print(f"It is an array of {check_type(array_type)} type and length {array_length}. Please insert array values separated by spaces (Insert 00 to go back to previous section).")
+                value = input()
+                if value == '00':
+                    if i == 0:
+                        return None, True
+                    else:
+                        i -= 1
                 else:
-                    i -= 1
+                    array_values = value.split()
+
+                    # Check if array has correct length
+                    if len(array_values) != array_length:
+                        print(f"Error: Expected array of length {array_length}, but got {len(array_values)}")
+                        continue
+
+                    # Convert array elements basing on the type
+                    valid_values = []
+                    for j in range(len(array_values)):
+                        converted_value = check_type_and_convert(array_type, array_values[j])
+                        if converted_value is not None:
+                            valid_values.append(converted_value)
+                        else:
+                            print(f"Invalid input at index {j}. Please try again.")
+                            break
+                    else:
+                        final_args[arg['name']] = valid_values
+                        i += 1
+
             else:
-                array_values = input().split()
-
-                # Check if array has correct length
-                if len(array_values) != array_length:
-                    raise Exception(f"Error: Expected array of length {array_length}, but got {len(array_values)}")
-
-                # Convert array elements basing on the type
-                for i in range(len(array_values)):
-                    array_values[i] = check_type_and_convert(array_type, array_values[i])
-
-                final_args[arg['name']] = array_values
-                i += 1
-
-        else:
-            # Single value management
-            print(f"It is a {check_type(arg['type'])} (Insert 00 to go back to previous section).")
-            text_input = input()
-            if value == '00':
-                if i == 0:
-                    return None, True
+                # Single value management
+                print(f"It is a {check_type(arg['type'])} (Insert 00 to go back to previous section).")
+                text_input = input()
+                if text_input == '00':
+                    if i == 0:
+                        return None, True
+                    else:
+                        i -= 1
                 else:
-                    i -= 1
-            else:
-                final_args[arg['name']] = check_type_and_convert(arg['type'], text_input)
-                i += 1
+                    converted_value = check_type_and_convert(arg['type'], text_input)
+                    if converted_value is not None:
+                        final_args[arg['name']] = converted_value
+                        i += 1
+                    else:
+                        print("Invalid input. Please try again.")
+                        continue
 
-    return final_args, False
+        repeat = manage_provider(cluster, program_name, instruction, accounts, final_args, signer_account_keypairs)
+        i -= 1
+
+    return False
 
 def check_type(type):
     if (type == "u8" or type == "u16" or type == "u32" or type == "u64" or type == "u128" or type == "u256"
@@ -502,17 +544,22 @@ def check_type(type):
         return ""
 
 def check_type_and_convert(type, value):
-    if (type == "u8" or type == "u16" or type == "u32" or type == "u64" or type == "u128" or type == "u256"
-            or type == "i8" or type == "i16" or type == "i32" or type == "i64" or type == "i128" or type == "i256"):
-        return int(value)
-    elif type == "bool":
-        return bool(value)
-    elif type == "f32" or type == "f64":
-        return float(value)
-    elif type == "string":
-        return value
-    else:
-        return value
+    try:
+        if (type == "u8" or type == "u16" or type == "u32" or type == "u64" or type == "u128" or type == "u256" or type == "i8" or type == "i16" or type == "i32" or type == "i64" or type == "i128" or type == "i256"):
+            return int(value)
+        elif type == "bool":
+            if value.lower() == 'true':
+                return True
+            elif value.lower() == 'false':
+                return False
+        elif type == "f32" or type == "f64":
+            return float(value)
+        elif type == "string":
+            return value
+        else:
+            raise ValueError("Unsupported type")
+    except ValueError as e:
+        return None
 
 
 
@@ -521,24 +568,32 @@ def check_type_and_convert(type, value):
 # ====================================================
 
 def manage_provider(cluster, program_name, instruction, accounts, args, signer_account_keypairs):
+    keypair = _get_client_wallet()
+    if keypair is None:
+        return True
+
     client = create_client(cluster)
-    provider = _prepare_provider(client)
+    provider_wallet = Wallet(keypair)
+    provider = Provider(client, provider_wallet)
     asyncio.run(manage_transaction(program_name, instruction, accounts, args, signer_account_keypairs, client, provider))
 
-def _prepare_provider(client):
-    print("Place your wallet in the solana_wallets folder and rename it to my_wallet.json")
-    print("Press enter when done")
-    input()
-    provider_account = load_keypair_from_file(f"{solana_base_path}/solana_wallets/my_wallet.json")
-    provider_wallet = Wallet(provider_account)
-    provider = Provider(client, provider_wallet)
-    return provider
+def _get_client_wallet():
+    allowed_choices = ['1', '0']
+    choice = None
 
-
-
-
-
-
-
-
-
+    while choice not in allowed_choices:
+        print("Place your wallet in the solana_wallets folder and rename it to my_wallet.json")
+        print("1) Done")
+        print("0) Go back")
+        choice = input()
+        if choice == '1':
+            keypair = load_keypair_from_file(f"{solana_base_path}/solana_wallets/my_wallet.json")
+            if keypair is None:
+                print("Wallet not found.")
+                choice = None
+            else:
+                return keypair
+        elif choice == '0':
+            return None
+        else:
+            print("Please choose a valid choice")

@@ -34,7 +34,7 @@ def choose_action():
         print("What you wanna do?")
         print(f"1. Compile new program(s)")
         print("2. Run program (Only anchorpy initialized programs)")
-        print("0. Back to Solana menu")
+        print("0. Back to language selection")
 
         # Manage choice
         choice = input()

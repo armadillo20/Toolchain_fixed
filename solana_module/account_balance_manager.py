@@ -22,7 +22,7 @@
 
 
 import asyncio
-from solana_module.utils import load_keypair_from_file, create_client
+from solana_module.utils import load_keypair_from_file, create_client, solana_base_path
 
 
 # ====================================================
@@ -31,6 +31,8 @@ from solana_module.utils import load_keypair_from_file, create_client
 
 def request_balance():
     keypair = _choose_wallet()
+    if keypair is None:
+        return
     client = _manage_client_creation()
     asyncio.run(_print_account_balance(client, keypair.pubkey()))
 
@@ -45,10 +47,12 @@ def _choose_wallet():
     print(f"Place wallet in the solana_wallets folder")
     print("Insert name of the wallet file")
     file_name = input()
-    try:
-        return load_keypair_from_file(f"solana_module/solana_wallets/{file_name}")
-    except:
-        raise Exception("Wallet not found")
+    wallet = load_keypair_from_file(f"{solana_base_path}/solana_wallets/{file_name}")
+    if wallet is None:
+        print("Wallet not found")
+        return None
+    else:
+        return wallet
 
 def _manage_client_creation():
     clusters = ["Localnet", "Devnet", "Mainnet"]

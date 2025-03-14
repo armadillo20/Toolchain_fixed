@@ -43,7 +43,7 @@ def choose_module(supported_modules):
             request_balance_or_choose_language()
             choice = None # Reset choice
         # ADD HERE NEW MODULE CALLS (elif)
-        elif choice == 0:
+        elif choice == '0':
             print("Exiting...")
         else:
             print("Invalid choice. Please insert a valid choice.")

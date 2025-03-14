@@ -64,7 +64,7 @@ def _choose_language():
         print("Please choose:")
         for i, lang in enumerate(supported_languages, start=1):
             print(f"{i}) {lang}")
-        print("0) Go back")
+        print("0) Back to Solana menu")
 
         choice = input()
 

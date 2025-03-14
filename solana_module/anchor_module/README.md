@@ -14,6 +14,5 @@ Launch user_interface and reach Anchor section through the menus, then two possi
 
 Please note:
 - Compiling may take a while, please be patient
-- At the moment, if you make a wrong choice in the menu, you can't go back. Sorry, if that happens, restart the program and re-insert required data
 - At the moment, the tool can only deal with classical parameter types (e.g. uint, int, float, string) and arrays. It can't deal with structs or other complex parameter types
 - The tool has been tested only on bet and htlc smart contracts
