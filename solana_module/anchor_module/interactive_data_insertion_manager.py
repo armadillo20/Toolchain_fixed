@@ -21,22 +21,15 @@
 # THE SOFTWARE.
 
 
-import json
-import re
 import os
-import toml
-import random
-import string
 import importlib
 import importlib.util
 import asyncio
-
 from based58 import b58encode
 from solders.pubkey import Pubkey
 from anchorpy import Provider, Wallet
-from solana_module.utils import create_client
-from solana_module.anchor_module.utils import anchor_base_path
-from solana_module.utils import load_keypair_from_file, solana_base_path
+from solana_module.utils import solana_base_path, create_client, load_keypair_from_file
+from solana_module.anchor_module.utils import anchor_base_path, find_initialized_programs, find_program_instructions, find_required_accounts, fetch_cluster, find_signer_accounts, find_args
 from solana_module.anchor_module.transaction_manager import manage_transaction
 
 
@@ -46,7 +39,7 @@ from solana_module.anchor_module.transaction_manager import manage_transaction
 
 def run_program():
     # Fetch initialized programs
-    program_names = _find_initialized_programs()
+    program_names = find_initialized_programs()
     if len(program_names) == 0:
         print("No program has been initialized yet.")
         return
@@ -60,30 +53,9 @@ def run_program():
 # PRIVATE FUNCTIONS
 # ====================================================
 
-
 # ====================================================
 # Program selection
 # ====================================================
-
-def _find_initialized_programs():
-    path_to_explore = f"{anchor_base_path}/.anchor_files"
-    programs_with_anchorpy_files = []
-
-    # Check if the base directory exists before proceeding
-    if not os.path.exists(path_to_explore):
-        return programs_with_anchorpy_files
-
-    # Iterate program folders
-    for program in os.listdir(path_to_explore):
-        program_path = os.path.join(path_to_explore, program)
-
-        # Check if anchorpy_files folder is present
-        if os.path.isdir(program_path):
-            anchorpy_path = os.path.join(program_path, 'anchorpy_files')
-            if os.path.isdir(anchorpy_path):
-                programs_with_anchorpy_files.append(program)
-
-    return programs_with_anchorpy_files
 
 def _choose_program_to_run(program_names):
     # Generate list of numbers corresponding to the number of found programs
@@ -106,7 +78,7 @@ def _choose_program_to_run(program_names):
 
         # Manage choice
         chosen_program = program_names[int(choice) - 1]
-        instructions, idl = _find_program_instructions(chosen_program)
+        instructions, idl = find_program_instructions(chosen_program)
         # If initialized instructions are found
         if instructions:
             repeat = _choose_instruction_to_run(instructions, idl, chosen_program)
@@ -114,25 +86,9 @@ def _choose_program_to_run(program_names):
             print("No instructions found for this program")
             repeat = True
 
-
-
 # ====================================================
 # Instruction selection
 # ====================================================
-
-def _find_program_instructions(program_name):
-    idl_file_path = f'{anchor_base_path}/.anchor_files/{program_name}/anchor_environment/target/idl/{program_name}.json'
-    idl = _load_idl(idl_file_path)
-
-    instructions = []
-    # Extract instructions
-    for instruction in idl['instructions']:
-        instructions.append(instruction['name'])
-    return instructions, idl
-
-def _load_idl(file_path):
-    with open(file_path, 'r') as f:
-        return json.load(f)
 
 def _choose_instruction_to_run(instructions, idl, program_name):
     # Generate list of numbers corresponding to the number of found instructions + the option to come back
@@ -157,8 +113,6 @@ def _choose_instruction_to_run(instructions, idl, program_name):
 
     return False # Needed to come back to main menu after finishing
 
-
-
 # ====================================================
 # Accounts management
 # ====================================================
@@ -166,11 +120,11 @@ def _choose_instruction_to_run(instructions, idl, program_name):
 def _preselect_pda_accounts(program_name, instruction, idl):
     repeat = True
     # Find cluster and print to let the user know
-    cluster = _fetch_cluster(program_name)
+    cluster = fetch_cluster(program_name)
     print(f"This program is deployed on {cluster}")
 
     # Fetch required accounts
-    required_accounts = _find_required_accounts(instruction, idl)
+    required_accounts = find_required_accounts(instruction, idl)
     pda_accounts = []
 
     # Manage pda account pre-selection
@@ -200,30 +154,6 @@ def _preselect_pda_accounts(program_name, instruction, idl):
                 return True # Needed to reload previous menu
 
     return False # needed to come back to main menu when finished
-
-def _fetch_cluster(program_name):
-    file_path = f"{anchor_base_path}/.anchor_files/{program_name}/anchor_environment/Anchor.toml"
-    config = toml.load(file_path)
-    cluster = config['provider']['cluster']
-    if cluster == "Localnet" or cluster == "Devnet" or cluster == "Mainnet":
-        return cluster
-    else:
-        raise Exception("Cluster not found or not equal to the available choices")
-
-def _find_required_accounts(instruction, idl):
-    # Find the instruction in the IDL
-    instruction_dict = next(instr for instr in idl['instructions'] if instr['name'] == instruction)
-
-    # Extract required accounts, excluding the systemProgram
-    required_accounts = [_camel_to_snake(account['name']) for account in instruction_dict['accounts'] if account['name'] != 'systemProgram']
-
-    return required_accounts
-
-def _camel_to_snake(camel_str):
-    # Use regex to add a _ before uppercase letters, excluded the first letter
-    snake_str = re.sub(r'([a-z0-9])([A-Z])', r'\1_\2', camel_str)
-    # Converto to lower case the whole string, leaving only the first letter as it is
-    return snake_str[0] + snake_str[1:].lower()
 
 def _annotate_pda_account(required_accounts, pda_accounts):
     allowed_choices = list(map(str, range(1, len(required_accounts) + 1)))
@@ -267,7 +197,7 @@ def _setup_required_accounts(required_accounts, instruction, idl, pda_accounts, 
                 final_accounts[required_account] = keypair.pubkey()
 
                 # If it is a signer account, save its keypair into signer_accounts_keypairs
-                signer_accounts = _find_signer_accounts(instruction, idl)
+                signer_accounts = find_signer_accounts(instruction, idl)
                 if required_account in signer_accounts:
                     signer_accounts_keypairs[required_account] = keypair
                 print(f"{required_account} account added.")
@@ -287,15 +217,6 @@ def _setup_required_accounts(required_accounts, instruction, idl, pda_accounts, 
             return True
 
     return False
-
-def _find_signer_accounts(instruction, idl):
-    # Find the instruction in the IDL
-    instruction_dict = next(instr for instr in idl['instructions'] if instr['name'] == instruction)
-
-    # Extract signer accounts
-    required_signer_accounts = [account['name'] for account in instruction_dict['accounts'] if account['isSigner']]
-
-    return required_signer_accounts
 
 def _setup_pda_accounts(pda_accounts, final_accounts, program_name, instruction, idl, cluster, accounts, signer_accounts_keypairs):
     repeat = True
@@ -442,30 +363,19 @@ def _manage_seed_generation_from_account(final_accounts):
                 return None, True
         return list(final_accounts.values())[int(choice) - 1], False
 
-
-
 # ====================================================
 # Args management
 # ====================================================
 
 def _setup_args(instruction, idl, cluster, program_name, accounts, signer_account_keypairs):
     required_args = find_args(instruction, idl)
-    repeat = manage_args(required_args, cluster, program_name, instruction, accounts, signer_account_keypairs)
+    repeat = _manage_args(required_args, cluster, program_name, instruction, accounts, signer_account_keypairs)
     if repeat:
         return True
     else:
         return False
 
-def find_args(instruction, idl):
-    # Find instruction
-    instruction_dict = next(instr for instr in idl['instructions'] if instr['name'] == instruction)
-
-    # Extract args
-    required_args = [{'name': _camel_to_snake(arg['name']), 'type': arg['type']} for arg in instruction_dict['args']]
-
-    return required_args
-
-def manage_args(args, cluster, program_name, instruction, accounts, signer_account_keypairs):
+def _manage_args(args, cluster, program_name, instruction, accounts, signer_account_keypairs):
     final_args = dict()
     repeat = True
     i = 0
@@ -479,7 +389,7 @@ def manage_args(args, cluster, program_name, instruction, accounts, signer_accou
             if isinstance(arg['type'], dict) and 'array' in arg['type']:
                 array_type = arg['type']['array'][0]
                 array_length = arg['type']['array'][1]
-                print(f"It is an array of {check_type(array_type)} type and length {array_length}. Please insert array values separated by spaces (Insert 00 to go back to previous section).")
+                print(f"It is an array of {_check_type(array_type)} type and length {array_length}. Please insert array values separated by spaces (Insert 00 to go back to previous section).")
                 value = input()
                 if value == '00':
                     if i == 0:
@@ -497,7 +407,7 @@ def manage_args(args, cluster, program_name, instruction, accounts, signer_accou
                     # Convert array elements basing on the type
                     valid_values = []
                     for j in range(len(array_values)):
-                        converted_value = check_type_and_convert(array_type, array_values[j])
+                        converted_value = _check_type_and_convert(array_type, array_values[j])
                         if converted_value is not None:
                             valid_values.append(converted_value)
                         else:
@@ -509,7 +419,7 @@ def manage_args(args, cluster, program_name, instruction, accounts, signer_accou
 
             else:
                 # Single value management
-                print(f"It is a {check_type(arg['type'])} (Insert 00 to go back to previous section).")
+                print(f"It is a {_check_type(arg['type'])} (Insert 00 to go back to previous section).")
                 text_input = input()
                 if text_input == '00':
                     if i == 0:
@@ -517,7 +427,7 @@ def manage_args(args, cluster, program_name, instruction, accounts, signer_accou
                     else:
                         i -= 1
                 else:
-                    converted_value = check_type_and_convert(arg['type'], text_input)
+                    converted_value = _check_type_and_convert(arg['type'], text_input)
                     if converted_value is not None:
                         final_args[arg['name']] = converted_value
                         i += 1
@@ -525,12 +435,12 @@ def manage_args(args, cluster, program_name, instruction, accounts, signer_accou
                         print("Invalid input. Please try again.")
                         continue
 
-        repeat = manage_provider(cluster, program_name, instruction, accounts, final_args, signer_account_keypairs)
+        repeat = _manage_provider(cluster, program_name, instruction, accounts, final_args, signer_account_keypairs)
         i -= 1
 
     return False
 
-def check_type(type):
+def _check_type(type):
     if (type == "u8" or type == "u16" or type == "u32" or type == "u64" or type == "u128" or type == "u256"
             or type == "i8" or type == "i16" or type == "i32" or type == "i64" or type == "i128" or type == "i256"):
         return "integer"
@@ -543,7 +453,7 @@ def check_type(type):
     else:
         return ""
 
-def check_type_and_convert(type, value):
+def _check_type_and_convert(type, value):
     try:
         if (type == "u8" or type == "u16" or type == "u32" or type == "u64" or type == "u128" or type == "u256" or type == "i8" or type == "i16" or type == "i32" or type == "i64" or type == "i128" or type == "i256"):
             return int(value)
@@ -561,13 +471,11 @@ def check_type_and_convert(type, value):
     except ValueError as e:
         return None
 
-
-
 # ====================================================
 # Provider management
 # ====================================================
 
-def manage_provider(cluster, program_name, instruction, accounts, args, signer_account_keypairs):
+def _manage_provider(cluster, program_name, instruction, accounts, args, signer_account_keypairs):
     keypair = _get_client_wallet()
     if keypair is None:
         return True
