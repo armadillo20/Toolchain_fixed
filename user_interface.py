@@ -21,7 +21,7 @@
 # THE SOFTWARE.
 
 
-from solana_module.solana_user_interface import request_balance_or_choose_language
+from solana_module.solana_user_interface import choose_action
 # ADD HERE NEW MODULES REQUIRED IMPORTS (STARTING FROM THE PROJECT ROOT)
 
 
@@ -40,7 +40,7 @@ def choose_module(supported_modules):
         choice = input()
 
         if choice == '1':
-            request_balance_or_choose_language()
+            choose_action()
             choice = None # Reset choice
         # ADD HERE NEW MODULE CALLS (elif)
         elif choice == '0':

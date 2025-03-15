@@ -21,12 +21,13 @@
 # THE SOFTWARE.
 
 
+from solana_module.public_key_extractor import get_public_key
 from solana_module.account_balance_manager import request_balance
 from solana_module.anchor_module import anchor_user_interface
 # ADD HERE NEW SOLANA LANGUAGES REQUIRED IMPORTS (STARTING FROM THE PROJECT ROOT)
 
 
-def request_balance_or_choose_language():
+def choose_action():
     # Manage allowed choices
     allowed_choices = ['1', '2', '0']
     choice = None
@@ -35,7 +36,7 @@ def request_balance_or_choose_language():
     while choice not in allowed_choices:
         print("Please choose:")
         print("1) Choose language")
-        print("2) Request balance")
+        print("2) Utilities")
         print("0) Back to module selection")
 
         choice = input()
@@ -44,7 +45,7 @@ def request_balance_or_choose_language():
             _choose_language()
             choice = None
         elif choice == '2':
-            request_balance()
+            _choose_utility()
             choice = None
         elif choice == '0':
             return
@@ -72,6 +73,31 @@ def _choose_language():
             anchor_user_interface.choose_action()
             choice = None
         # ADD HERE NEW LANGUAGE CALLS
+        elif choice == '0':
+            return
+        else:
+            print("Invalid choice. Please insert a valid choice.")
+
+def _choose_utility():
+    allowed_choices = ['1', '2', '0']
+
+    choice = None
+
+    # Print available choices
+    while choice not in allowed_choices:
+        print("Please choose:")
+        print("1) Request balance")
+        print("2) Get public key from wallet")
+        print("0) Back to Solana menu")
+
+        choice = input()
+
+        if choice == '1':
+            request_balance()
+            choice = None
+        elif choice == '2':
+            get_public_key()
+            choice = None
         elif choice == '0':
             return
         else:

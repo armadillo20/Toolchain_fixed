@@ -28,8 +28,8 @@ import asyncio
 from based58 import b58encode
 from solders.pubkey import Pubkey
 from anchorpy import Provider, Wallet
-from solana_module.utils import solana_base_path, create_client, load_keypair_from_file
-from solana_module.anchor_module.utils import anchor_base_path, find_initialized_programs, find_program_instructions, find_required_accounts, fetch_cluster, find_signer_accounts, find_args
+from solana_module.solana_utils import solana_base_path, create_client, load_keypair_from_file
+from solana_module.anchor_module.anchor_utils import anchor_base_path, find_initialized_programs, find_program_instructions, find_required_accounts, fetch_cluster, find_signer_accounts, find_args
 from solana_module.anchor_module.transaction_manager import manage_transaction
 
 
@@ -344,7 +344,9 @@ def _manage_seed_insertion(n_seeds, final_accounts, program_id):
                 else:
                     i -= 1
 
-    return Pubkey.find_program_address(seeds, program_id)[0], False
+    pda_key = Pubkey.find_program_address(seeds, program_id)[0]
+    print(f'Generated key is: {pda_key}')
+    return pda_key, False
 
 def _manage_seed_generation_from_account(final_accounts):
     # Generate list of numbers corresponding to the number of found accounts

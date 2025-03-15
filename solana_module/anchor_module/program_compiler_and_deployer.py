@@ -26,8 +26,8 @@ import re
 import subprocess
 import os
 import platform
-from solana_module.utils import solana_base_path
-from solana_module.anchor_module.utils import anchor_base_path
+from solana_module.solana_utils import solana_base_path
+from solana_module.anchor_module.anchor_utils import anchor_base_path
 
 
 # ====================================================

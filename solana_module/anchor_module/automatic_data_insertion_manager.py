@@ -23,16 +23,56 @@
 
 import csv
 import os
-from solana_module.anchor_module.utils import anchor_base_path
-
-def read_csv():
-    with open(f'{anchor_base_path}/execution_traces/file.csv', mode='r') as file:
-        csv_reader = csv.reader(file)
-        for row in csv_reader:
-            print(row)  # Ogni 'row' è una lista di valori
+from solders.pubkey import Pubkey
+from solana_module.anchor_module.anchor_utils import anchor_base_path, find_initialized_programs, find_program_instructions, find_required_accounts
 
 
-def write_csv():
+def run_execution_trace():
+    print(f"Place execution trace in the in the execution_traces folder of the Anchor module")
+    print("Insert name of the execution trace file")
+    file_name = input()
+    csv_file = _read_csv(f"{anchor_base_path}/execution_traces/{file_name}")
+    if csv_file is None:
+        print("Execution trace not found")
+        return
+
+    initialized_programs = find_initialized_programs()
+    for execution_trace in csv_file:
+        # Get execution trace ID
+        trace_id = execution_trace[0]
+
+        # Manage program
+        program = execution_trace[1]
+        if program not in initialized_programs:
+            print(f"Program {program} not initialized yet (execution trace {trace_id}).")
+            return
+
+        # Manage instruction
+        instructions, idl = find_program_instructions(program)
+        instruction = execution_trace[2]
+        if instruction not in instructions:
+            print(f"Instruction {instruction} not found for the program {program} (execution trace {trace_id}).")
+
+        # Manage accounts
+        final_accounts = dict()
+        signer_accounts_keypairs = dict()
+        required_accounts = find_required_accounts(instruction, idl)
+        i = 3
+        for account in required_accounts:
+            final_accounts[account] = Pubkey.from_string(execution_trace[i])
+            i += 1
+
+
+
+def _read_csv(file_path):
+    if os.path.exists(file_path):
+        with open(file_path, mode='r') as file:
+            csv_file = csv.reader(file)
+            return csv_file
+    else:
+        return None
+
+def _write_csv():
     cartella = f'{anchor_base_path}/execution_traces_results'
     file_csv = os.path.join(cartella, 'file_results.csv')
 

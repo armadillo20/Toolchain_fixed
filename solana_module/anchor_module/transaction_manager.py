@@ -27,7 +27,7 @@ import importlib
 from solders.message import MessageV0
 from solders.transaction import VersionedTransaction
 from solana.transaction import Transaction
-from solana_module.anchor_module.utils import anchor_base_path
+from solana_module.anchor_module.anchor_utils import anchor_base_path
 
 
 # ====================================================

@@ -49,3 +49,14 @@ def create_client(cluster):
     # Crete client
     client = AsyncClient(rpc_url)
     return client
+
+def choose_wallet():
+    print(f"Place wallet in the solana_wallets folder")
+    print("Insert name of the wallet file")
+    file_name = input()
+    wallet = load_keypair_from_file(f"{solana_base_path}/solana_wallets/{file_name}")
+    if wallet is None:
+        print("Wallet not found")
+        return None
+    else:
+        return wallet
