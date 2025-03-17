@@ -23,13 +23,15 @@
 
 import csv
 import os
+import re
 from solders.pubkey import Pubkey
 from anchorpy import Wallet, Provider
 from solana_module.anchor_module.transaction_manager import build_transaction, measure_transaction_size, \
     compute_transaction_fees, send_transaction
 from solana_module.solana_utils import load_keypair_from_file, solana_base_path, create_client
 from solana_module.anchor_module.anchor_utils import anchor_base_path, find_initialized_programs, \
-    find_program_instructions, find_required_accounts, find_signer_accounts, find_args, check_type, convert_type
+    find_program_instructions, find_required_accounts, find_signer_accounts, find_args, check_type, convert_type, \
+    fetch_cluster
 
 
 # ====================================================
@@ -54,12 +56,12 @@ async def run_execution_trace():
 
     # For each execution trace
     for index, row in enumerate(csv_file, start=1):
-        print(f"Working on execution trace {index}...")
-        # Separate values
-        execution_trace = row[0].split(";")
+        # Separate values and remove spaces
+        execution_trace = [x.strip() for x in re.split(r"[;,]", row[0])]
 
         # Get execution trace ID
         trace_id = execution_trace[0]
+        print(f"Working on execution trace with ID {trace_id}...")
 
         # Manage program
         program_name = execution_trace[1]
@@ -119,8 +121,7 @@ async def run_execution_trace():
         keypair = load_keypair_from_file(provider_keypair_path)
         if keypair is None:
             print("Provider wallet not found.")
-        i += 1
-        cluster = execution_trace[i]
+        cluster = fetch_cluster(program_name)
         client = create_client(cluster)
         provider_wallet = Wallet(keypair)
         provider = Provider(client, provider_wallet)
@@ -129,12 +130,17 @@ async def run_execution_trace():
         transaction = await build_transaction(program_name, instruction, final_accounts, final_args, signer_accounts_keypairs, client, provider)
         size = measure_transaction_size(transaction)
         fees = await compute_transaction_fees(client, transaction)
-        transaction_hash = await send_transaction(provider, transaction)
 
         # CSV building
-        csv_row = [trace_id, transaction_hash, size, fees]
-        results.append(csv_row)
+        csv_row = [trace_id, size, fees]
 
+        i += 1
+        if execution_trace[i] == 'True':
+            transaction_hash = await send_transaction(provider, transaction)
+            csv_row.append(transaction_hash)
+
+        # Append results
+        results.append(csv_row)
         print(f"Execution trace {index} results computed!")
 
     # CSV writing

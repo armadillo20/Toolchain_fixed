@@ -24,10 +24,10 @@
 
 import asyncio
 from anchorpy import Provider, Wallet
-from solana_module.solana_utils import create_client, choose_wallet
+from solana_module.solana_utils import create_client, choose_wallet, load_keypair_from_file, solana_base_path
 from solana_module.anchor_module.anchor_utils import find_initialized_programs, find_program_instructions, \
     find_required_accounts, find_signer_accounts, generate_pda, find_args, check_type, convert_type, \
-    fetch_cluster
+    fetch_cluster, anchor_base_path, load_idl
 from solana_module.anchor_module.transaction_manager import manage_transaction
 
 
@@ -62,7 +62,9 @@ def choose_program_to_run():
             elif choice in allowed_choices:
                 # Manage choice
                 chosen_program = initialized_programs[int(choice) - 1]
-                instructions, idl = find_program_instructions(chosen_program)
+                idl_file_path = f'{anchor_base_path}/.anchor_files/{chosen_program}/anchor_environment/target/idl/{chosen_program}.json'
+                idl = load_idl(idl_file_path)
+                instructions = find_program_instructions(idl)
                 # If initialized instructions are found
                 if instructions:
                     repeat = _choose_instruction_to_run(instructions, idl, chosen_program)
@@ -86,10 +88,10 @@ def choose_program_to_run():
 def _choose_instruction_to_run(instructions, idl, program_name):
     # Generate list of numbers corresponding to the number of found instructions + the option to come back
     allowed_choices = list(map(str, range(1, len(instructions) + 1))) + ['0']
-    choice = None
     repeat = True
 
     while repeat:
+        choice = None
         while choice not in allowed_choices:
             print("Which instruction do you want to run?")
             for idx, instruction in enumerate(instructions, 1):
@@ -131,8 +133,9 @@ def _setup_required_accounts(instruction, idl, program_name):
             choice = input()
 
             if choice == '1':
-                keypair = choose_wallet()
-                if keypair is not None:
+                chosen_wallet = choose_wallet()
+                if chosen_wallet is not None:
+                    keypair = load_keypair_from_file(f"{solana_base_path}/solana_wallets/{chosen_wallet}")
                     final_accounts[required_account] = keypair.pubkey()
                     # If it is a signer account, save its keypair into signer_accounts_keypairs
                     if required_account in signer_accounts:
@@ -153,6 +156,10 @@ def _setup_required_accounts(instruction, idl, program_name):
                 print(f"Please insert a valid choice.")
 
         repeat = _setup_args(instruction, idl, program_name, final_accounts, signer_accounts_keypairs)
+        if i == 0:
+            return True
+        else:
+            i -= 1
 
     return False
 
@@ -236,7 +243,10 @@ def _manage_args(args, program_name, instruction, accounts, signer_account_keypa
                         continue
 
         repeat = _manage_provider(program_name, instruction, accounts, final_args, signer_account_keypairs)
-        i -= 1
+        if i == 0:
+            return True
+        else:
+            i -= 1
 
     return False
 
@@ -246,10 +256,11 @@ def _manage_args(args, program_name, instruction, accounts, signer_account_keypa
 
 def _manage_provider(program_name, instruction, accounts, args, signer_account_keypairs):
     print("Now working with the transaction provider.")
-    keypair = choose_wallet()
-    if keypair is None:
+    chosen_wallet = choose_wallet()
+    if chosen_wallet is None:
         return True
     else:
+        keypair = load_keypair_from_file(f"{solana_base_path}/solana_wallets/{chosen_wallet}")
         cluster = fetch_cluster(program_name)
         client = create_client(cluster)
         provider_wallet = Wallet(keypair)

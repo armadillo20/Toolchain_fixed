@@ -36,6 +36,14 @@ def request_balance():
     client = _manage_client_creation()
     asyncio.run(_print_account_balance(client, keypair.pubkey()))
 
+def get_public_key():
+    keypair = choose_wallet()
+    if keypair is None:
+        return
+    else:
+        print(f"The public key is {keypair.pubkey()}")
+        print(f"The private key is {keypair.secret()}")
+
 
 
 

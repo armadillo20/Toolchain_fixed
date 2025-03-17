@@ -29,10 +29,14 @@ import importlib
 import importlib.util
 from based58 import b58encode
 from solders.pubkey import Pubkey
-from solana_module.solana_utils import solana_base_path, choose_wallet
+from solana_module.solana_utils import solana_base_path, choose_wallet, load_keypair_from_file
 
 anchor_base_path = f"{solana_base_path}/anchor_module"
 
+
+# ====================================================
+# PUBLIC FUNCTIONS
+# ====================================================
 
 def find_initialized_programs():
     path_to_explore = f"{anchor_base_path}/.anchor_files"
@@ -54,34 +58,21 @@ def find_initialized_programs():
 
     return programs_with_anchorpy_files
 
-def find_program_instructions(program_name):
-    idl_file_path = f'{anchor_base_path}/.anchor_files/{program_name}/anchor_environment/target/idl/{program_name}.json'
-    idl = load_idl(idl_file_path)
-
+def find_program_instructions(idl):
     instructions = []
     # Extract instructions
     for instruction in idl['instructions']:
         instructions.append(instruction['name'])
-    return instructions, idl
-
-def load_idl(file_path):
-    with open(file_path, 'r') as f:
-        return json.load(f)
+    return instructions
 
 def find_required_accounts(instruction, idl):
     # Find the instruction in the IDL
     instruction_dict = next(instr for instr in idl['instructions'] if instr['name'] == instruction)
 
     # Extract required accounts, excluding the systemProgram
-    required_accounts = [camel_to_snake(account['name']) for account in instruction_dict['accounts'] if account['name'] != 'systemProgram']
+    required_accounts = [_camel_to_snake(account['name']) for account in instruction_dict['accounts'] if account['name'] != 'systemProgram']
 
     return required_accounts
-
-def camel_to_snake(camel_str):
-    # Use regex to add a _ before uppercase letters, excluded the first letter
-    snake_str = re.sub(r'([a-z0-9])([A-Z])', r'\1_\2', camel_str)
-    # Converto to lower case the whole string, leaving only the first letter as it is
-    return snake_str[0] + snake_str[1:].lower()
 
 def fetch_cluster(program_name):
     file_path = f"{anchor_base_path}/.anchor_files/{program_name}/anchor_environment/Anchor.toml"
@@ -91,6 +82,10 @@ def fetch_cluster(program_name):
         return cluster
     else:
         raise Exception("Cluster not found or not equal to the available choices")
+
+def load_idl(file_path):
+    with open(file_path, 'r') as f:
+        return json.load(f)
 
 def find_signer_accounts(instruction, idl):
     # Find the instruction in the IDL
@@ -142,6 +137,59 @@ def generate_pda(program_name, launched_from_utilities):
 
     return pda_key
 
+def find_args(instruction, idl):
+    # Find instruction
+    instruction_dict = next(instr for instr in idl['instructions'] if instr['name'] == instruction)
+
+    # Extract args
+    required_args = [{'name': _camel_to_snake(arg['name']), 'type': arg['type']} for arg in instruction_dict['args']]
+
+    return required_args
+
+def check_type(type):
+    if (type == "u8" or type == "u16" or type == "u32" or type == "u64" or type == "u128" or type == "u256"
+            or type == "i8" or type == "i16" or type == "i32" or type == "i64" or type == "i128" or type == "i256"):
+        return "integer"
+    elif type == "bool":
+        return "boolean"
+    elif type == "f32" or type == "f64":
+        return "floating point number"
+    elif type == "string":
+        return "string"
+    else:
+        return "Unsupported type"
+
+def convert_type(type, value):
+    try:
+        if type == "integer":
+            return int(value)
+        elif type == "boolean":
+            if value.lower() == 'true':
+                return True
+            elif value.lower() == 'false':
+                return False
+        elif type == "floating point number":
+            return float(value)
+        elif type == "string":
+            return value
+        else:
+            raise ValueError("Unsupported type")
+    except ValueError:
+        return None
+
+
+
+
+# ====================================================
+# PRIVATE FUNCTIONS
+# ====================================================
+
+def _camel_to_snake(camel_str):
+    # Use regex to add a _ before uppercase letters, excluded the first letter
+    snake_str = re.sub(r'([a-z0-9])([A-Z])', r'\1_\2', camel_str)
+    # Converto to lower case the whole string, leaving only the first letter as it is
+    return snake_str[0] + snake_str[1:].lower()
+
 def _choose_number_of_seed(program_name):
     pda_key = None
     repeat = True
@@ -180,11 +228,13 @@ def _manage_seed_insertion(program_name, n_seeds):
             choice = input()
 
             if choice == "1":
-                keypair = choose_wallet()
-                if keypair is not None:
+                chosen_wallet = choose_wallet()
+                if chosen_wallet is not None:
+                    keypair = load_keypair_from_file(f"{solana_base_path}/solana_wallets/{chosen_wallet}")
                     seed = keypair.pubkey()
                     seeds[i] = bytes(seed)
                     i += 1
+
             elif choice == "2":
                 seed = os.urandom(32)
                 print(f'Extracted seed (hex): {seed.hex()}')
@@ -209,43 +259,3 @@ def _manage_seed_insertion(program_name, n_seeds):
     pda_key = Pubkey.find_program_address(seeds, program_id)[0]
     print(f'Generated key is: {pda_key}')
     return pda_key, False
-
-def find_args(instruction, idl):
-    # Find instruction
-    instruction_dict = next(instr for instr in idl['instructions'] if instr['name'] == instruction)
-
-    # Extract args
-    required_args = [{'name': camel_to_snake(arg['name']), 'type': arg['type']} for arg in instruction_dict['args']]
-
-    return required_args
-
-def check_type(type):
-    if (type == "u8" or type == "u16" or type == "u32" or type == "u64" or type == "u128" or type == "u256"
-            or type == "i8" or type == "i16" or type == "i32" or type == "i64" or type == "i128" or type == "i256"):
-        return "integer"
-    elif type == "bool":
-        return "boolean"
-    elif type == "f32" or type == "f64":
-        return "floating point number"
-    elif type == "string":
-        return "string"
-    else:
-        return "Unsupported type"
-
-def convert_type(type, value):
-    try:
-        if type == "integer":
-            return int(value)
-        elif type == "boolean":
-            if value.lower() == 'true':
-                return True
-            elif value.lower() == 'false':
-                return False
-        elif type == "floating point number":
-            return float(value)
-        elif type == "string":
-            return value
-        else:
-            raise ValueError("Unsupported type")
-    except ValueError:
-        return None

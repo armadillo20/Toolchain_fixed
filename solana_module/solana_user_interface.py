@@ -21,8 +21,7 @@
 # THE SOFTWARE.
 
 
-from solana_module.public_key_extractor import get_public_key
-from solana_module.account_balance_manager import request_balance
+from solana_module.solana_utilities import request_balance, get_public_key
 from solana_module.anchor_module import anchor_user_interface
 # ADD HERE NEW SOLANA LANGUAGES REQUIRED IMPORTS (STARTING FROM THE PROJECT ROOT)
 

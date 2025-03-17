@@ -23,7 +23,8 @@
 
 import asyncio
 from solana_module.anchor_module.automatic_data_insertion_manager import run_execution_trace
-from solana_module.anchor_module.pda_key_generator import choose_program_for_pda_generation
+from solana_module.anchor_module.anchor_utilities import choose_program_for_pda_generation, get_initialized_programs, \
+    get_program_instructions, get_instruction_args
 from solana_module.anchor_module.program_compiler_and_deployer import compile_programs
 from solana_module.anchor_module.interactive_data_insertion_manager import choose_program_to_run
 
@@ -80,19 +81,31 @@ def _choose_running_mode():
             print("Please insert a valid choice.")
 
 def _choose_utility():
-    allowed_choices = ["1", "0"]
+    allowed_choices = ["1", "2", "3", "4", "5", "0"]
     choice = None
 
     # Interactive menu
     while choice != "0":
         # Print options
         print("Please choose:")
-        print("1) PDA key generator")
+        print("1) Get available programs")
+        print("2) Get available instructions")
+        print("3) Get instruction required accounts")
+        print("4) Get instruction required arguments")
+        print("5) Generate PDA key")
         print("0) Back to Anchor menu")
 
         # Manage choice
         choice = input()
         if choice == "1":
+            get_initialized_programs()
+        if choice == "2":
+            get_program_instructions()
+        if choice == "3":
+            pass
+        if choice == "4":
+            get_instruction_args()
+        elif choice == "5":
             choose_program_for_pda_generation()
         elif choice == "0":
             return

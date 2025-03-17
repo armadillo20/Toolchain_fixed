@@ -30,6 +30,10 @@ from solana.rpc.async_api import AsyncClient
 solana_base_path = "solana_module"
 
 
+# ====================================================
+# PUBLIC FUNCTIONS
+# ====================================================
+
 def load_keypair_from_file(file_path):
     if os.path.exists(file_path):
         with open(file_path, 'r') as f:
@@ -70,14 +74,16 @@ def choose_wallet():
             return None
         elif choice in allowed_choices:
             chosen_wallet = wallet_names[int(choice) - 1]
-            wallet = load_keypair_from_file(f"{solana_base_path}/solana_wallets/{chosen_wallet}")
-            if wallet is None:
-                print("A problem has occurred while opening the wallet.")
-                return None
-            else:
-                return wallet
+            return chosen_wallet
         else:
             print("Please choose a valid choice.")
+
+
+
+
+# ====================================================
+# PRIVATE FUNCTIONS
+# ====================================================
 
 def _get_wallet_names():
     wallets_path = f"{solana_base_path}/solana_wallets"

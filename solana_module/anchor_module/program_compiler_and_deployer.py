@@ -26,7 +26,7 @@ import re
 import subprocess
 import os
 import platform
-from solana_module.solana_utils import solana_base_path
+from solana_module.solana_utils import solana_base_path, choose_wallet
 from solana_module.anchor_module.anchor_utils import anchor_base_path
 
 
@@ -210,12 +210,8 @@ def _impose_cargo_lock_version(program_name):
 # ====================================================
 
 def _deploy_program(program_name, operating_system):
-    file_path = f"{solana_base_path}/solana_wallets/my_wallet.json"
-    print("Place your wallet in the solana_wallets folder and rename it to my_wallet.json. Press enter when done.")
-    input()
-    # Check if wallet exists
-    if not os.path.exists(file_path):
-        print(f"File my_wallet.json not found")
+    wallet_name = choose_wallet()
+    if wallet_name is None:
         return
 
     # Manage cluster choice
@@ -239,7 +235,7 @@ def _deploy_program(program_name, operating_system):
             print("Please insert a valid choice.")
 
     # Modify generated file to set chosen cluster
-    _modify_cluster_wallet(program_name, cluster)
+    _modify_cluster_wallet(program_name, cluster, wallet_name)
 
     # Define deploy commands to be executed
     deploy_commands = [
@@ -255,13 +251,13 @@ def _deploy_program(program_name, operating_system):
 
     return program_id
 
-def _modify_cluster_wallet(program_name, cluster):
+def _modify_cluster_wallet(program_name, cluster, wallet_name):
     file_path = f"{anchor_base_path}/.anchor_files/{program_name}/anchor_environment/Anchor.toml"
     config = toml.load(file_path)
 
     # Edit values
     config['provider']['cluster'] = cluster
-    config['provider']['wallet'] = "../../../../solana_wallets/my_wallet.json"
+    config['provider']['wallet'] = f"../../../../solana_wallets/{wallet_name}"
 
     # Save modifications
     with open(file_path, 'w') as file:
