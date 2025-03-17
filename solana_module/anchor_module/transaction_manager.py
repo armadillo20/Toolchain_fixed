@@ -47,7 +47,7 @@ async def manage_transaction(program_name, instruction, accounts, args, signer_a
         print(f"Transaction size: {transaction_size} bytes")
 
     # Compute transaction fees
-    transaction_fees = await measure_transaction_fees(client, tx)
+    transaction_fees = await compute_transaction_fees(client, tx)
     if transaction_fees is None:
         print('Error while computing transaction fees.')
     else:
@@ -112,7 +112,7 @@ def measure_transaction_size(tx):
     size_in_bytes = len(serialized_tx)
     return size_in_bytes
 
-async def measure_transaction_fees(client, tx):
+async def compute_transaction_fees(client, tx):
     # Check transaction type
     if isinstance(tx, Transaction):
         tx_message = tx.compile_message()

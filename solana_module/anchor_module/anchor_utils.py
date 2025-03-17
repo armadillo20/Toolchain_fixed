@@ -25,10 +25,14 @@ import os
 import json
 import re
 import toml
-from solana_module.solana_utils import solana_base_path
-
+import importlib
+import importlib.util
+from based58 import b58encode
+from solders.pubkey import Pubkey
+from solana_module.solana_utils import solana_base_path, choose_wallet
 
 anchor_base_path = f"{solana_base_path}/anchor_module"
+
 
 def find_initialized_programs():
     path_to_explore = f"{anchor_base_path}/.anchor_files"
@@ -97,6 +101,115 @@ def find_signer_accounts(instruction, idl):
 
     return required_signer_accounts
 
+def generate_pda(program_name, launched_from_utilities):
+    pda_key = ''
+    allowed_choices = ['1','2','0']
+    if not launched_from_utilities:
+        allowed_choices.append('3')
+
+    repeat = True
+    while repeat:
+        choice = None
+        while choice not in allowed_choices:
+            print("How do you want to generate the PDA account?")
+            print("1) Generate using seeds")
+            print("2) Generate randomly")
+            if not launched_from_utilities:
+                print("3) Insert manually")
+            print("0) Go back")
+
+            choice = input()
+
+            if choice == "1":
+                pda_key, repeat = _choose_number_of_seed(program_name)
+            elif choice == "2":
+                random_bytes = os.urandom(32)
+                base58_str = b58encode(random_bytes).decode("utf-8")
+                pda_key = Pubkey.from_string(base58_str)
+                print(f'Extracted pda is: {pda_key}')
+                return pda_key
+            elif choice == "3" and not launched_from_utilities:
+                while len(pda_key) != 44:
+                    print("Insert PDA key. It must be 44 characters long. (Insert 0 to go back)")
+                    pda_key = input()
+                    if pda_key == '0':
+                        choice = None
+                        break
+                    else:
+                        return Pubkey.from_string(pda_key)
+            elif choice == "0":
+                return None
+
+    return pda_key
+
+def _choose_number_of_seed(program_name):
+    pda_key = None
+    repeat = True
+
+    while repeat:
+        print("How many seeds do you want to use? (Insert 0 to go back)")
+        n_seeds = int(input())
+        if n_seeds == 0:
+            return None, True
+        pda_key, repeat = _manage_seed_insertion(program_name, n_seeds)
+
+    return pda_key, False
+
+def _manage_seed_insertion(program_name, n_seeds):
+    # Dynamically import program id
+    module_path = f"{anchor_base_path}/.anchor_files/{program_name}/anchorpy_files/program_id.py"
+    spec = importlib.util.spec_from_file_location("program_id", module_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    program_id = module.PROGRAM_ID
+
+    allowed_choices = ['1','2','3','0']
+    seeds = [None] * n_seeds
+
+    i = 0
+    while i < n_seeds:
+        # Reset choice for next seed insertions
+        choice = None
+        while choice not in allowed_choices:
+            print(f"How do you want to insert the seed n. {i+1}?")
+            print("1) Generate using a wallet")
+            print("2) Generate randomly")
+            print("3) Insert manually")
+            print("0) Go back")
+
+            choice = input()
+
+            if choice == "1":
+                keypair = choose_wallet()
+                if keypair is not None:
+                    seed = keypair.pubkey()
+                    seeds[i] = bytes(seed)
+                    i += 1
+            elif choice == "2":
+                seed = os.urandom(32)
+                print(f'Extracted seed (hex): {seed.hex()}')
+                seeds[i] = seed
+                i += 1
+            elif choice == "3":
+                seed = ''
+                while len(seed) != 32:
+                    print("Insert seed. It must be 32 characters long. (Insert 0 to go back)")
+                    seed = input()
+                    if seed == '0':
+                        choice = None
+                        break
+                seeds[i] = bytes(seed, 'utf-8')
+                i += 1
+            elif choice == "0":
+                if i == 0:
+                    return None, True
+                else:
+                    i -= 1
+
+    pda_key = Pubkey.find_program_address(seeds, program_id)[0]
+    print(f'Generated key is: {pda_key}')
+    return pda_key, False
+
 def find_args(instruction, idl):
     # Find instruction
     instruction_dict = next(instr for instr in idl['instructions'] if instr['name'] == instruction)
@@ -105,3 +218,34 @@ def find_args(instruction, idl):
     required_args = [{'name': camel_to_snake(arg['name']), 'type': arg['type']} for arg in instruction_dict['args']]
 
     return required_args
+
+def check_type(type):
+    if (type == "u8" or type == "u16" or type == "u32" or type == "u64" or type == "u128" or type == "u256"
+            or type == "i8" or type == "i16" or type == "i32" or type == "i64" or type == "i128" or type == "i256"):
+        return "integer"
+    elif type == "bool":
+        return "boolean"
+    elif type == "f32" or type == "f64":
+        return "floating point number"
+    elif type == "string":
+        return "string"
+    else:
+        return "Unsupported type"
+
+def convert_type(type, value):
+    try:
+        if type == "integer":
+            return int(value)
+        elif type == "boolean":
+            if value.lower() == 'true':
+                return True
+            elif value.lower() == 'false':
+                return False
+        elif type == "floating point number":
+            return float(value)
+        elif type == "string":
+            return value
+        else:
+            raise ValueError("Unsupported type")
+    except ValueError:
+        return None

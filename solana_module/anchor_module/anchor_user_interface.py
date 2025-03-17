@@ -21,28 +21,80 @@
 # THE SOFTWARE.
 
 
+import asyncio
+from solana_module.anchor_module.automatic_data_insertion_manager import run_execution_trace
+from solana_module.anchor_module.pda_key_generator import choose_program_for_pda_generation
 from solana_module.anchor_module.program_compiler_and_deployer import compile_programs
-from solana_module.anchor_module.interactive_data_insertion_manager import run_program
+from solana_module.anchor_module.interactive_data_insertion_manager import choose_program_to_run
+
 
 def choose_action():
-    allowed_choices = ["1", "2", "0"]
+    allowed_choices = ["1", "2", "3", "0"]
     choice = None
 
     # Interactive menu
     while choice != "0":
         # Print options
         print("What you wanna do?")
-        print(f"1. Compile new program(s)")
-        print("2. Run program (Only anchorpy initialized programs)")
-        print("0. Back to language selection")
+        print("1) Compile new program(s)")
+        print("2) Run program")
+        print("3) Utilities")
+        print("0) Back to language selection")
 
         # Manage choice
         choice = input()
         if choice == "1":
             compile_programs()
         elif choice == "2":
-            run_program()
+                _choose_running_mode()
+        elif choice == "3":
+            _choose_utility()
         elif choice == "0":
-            print("Exiting...")
+            return
+        elif choice not in allowed_choices:
+            print("Please insert a valid choice.")
+
+def _choose_running_mode():
+    allowed_choices = ["1", "2", "0"]
+    choice = None
+
+    # Interactive menu
+    while choice != "0":
+        # Print options
+        print("Which mode?")
+        print("1) Interactive mode")
+        print("2) Automatic mode")
+        print("0) Back to Anchor menu")
+
+        # Manage choice
+        choice = input()
+        if choice == "1":
+            choose_program_to_run()
+            return
+        elif choice == "2":
+            asyncio.run(run_execution_trace())
+            return
+        elif choice == "0":
+            return
+        elif choice not in allowed_choices:
+            print("Please insert a valid choice.")
+
+def _choose_utility():
+    allowed_choices = ["1", "0"]
+    choice = None
+
+    # Interactive menu
+    while choice != "0":
+        # Print options
+        print("Please choose:")
+        print("1) PDA key generator")
+        print("0) Back to Anchor menu")
+
+        # Manage choice
+        choice = input()
+        if choice == "1":
+            choose_program_for_pda_generation()
+        elif choice == "0":
+            return
         elif choice not in allowed_choices:
             print("Please insert a valid choice.")

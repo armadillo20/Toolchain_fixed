@@ -26,7 +26,9 @@ import os
 from solders.keypair import Keypair
 from solana.rpc.async_api import AsyncClient
 
+
 solana_base_path = "solana_module"
+
 
 def load_keypair_from_file(file_path):
     if os.path.exists(file_path):
@@ -51,12 +53,40 @@ def create_client(cluster):
     return client
 
 def choose_wallet():
-    print(f"Place wallet in the solana_wallets folder")
-    print("Insert name of the wallet file")
-    file_name = input()
-    wallet = load_keypair_from_file(f"{solana_base_path}/solana_wallets/{file_name}")
-    if wallet is None:
-        print("Wallet not found")
-        return None
+    wallet_names = _get_wallet_names()
+    print("Here are the available wallets:")
+    allowed_choices = list(map(str, range(1, len(wallet_names) + 1))) + ['0']
+    choice = None
+
+    while choice not in allowed_choices:
+        print("Choose a wallet:")
+        for idx, wallet_name in enumerate(wallet_names, 1):
+            print(f"{idx}) {wallet_name}")
+        print("0) Go back")
+
+        choice = input()
+
+        if choice == '0':
+            return None
+        elif choice in allowed_choices:
+            chosen_wallet = wallet_names[int(choice) - 1]
+            wallet = load_keypair_from_file(f"{solana_base_path}/solana_wallets/{chosen_wallet}")
+            if wallet is None:
+                print("A problem has occurred while opening the wallet.")
+                return None
+            else:
+                return wallet
+        else:
+            print("Please choose a valid choice.")
+
+def _get_wallet_names():
+    wallets_path = f"{solana_base_path}/solana_wallets"
+    wallet_names = []
+    # Check if the folder exists
+    if not os.path.isdir(wallets_path):
+        print(f"The path '{wallets_path}' does not exist.")
     else:
-        return wallet
+        # Get all .json in the solana_wallets folder
+        wallet_names = [f for f in os.listdir(wallets_path) if f.endswith(".json")]
+
+    return wallet_names
