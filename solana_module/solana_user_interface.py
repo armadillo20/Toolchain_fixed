@@ -33,7 +33,7 @@ def choose_action():
 
     # Print available choices
     while choice not in allowed_choices:
-        print("Please choose:")
+        print("Choose an option:")
         print("1) Choose language")
         print("2) Utilities")
         print("0) Back to module selection")
@@ -61,7 +61,7 @@ def _choose_language():
 
     # Print available choices
     while choice not in allowed_choices:
-        print("Please choose:")
+        print("Choose a language:")
         for i, lang in enumerate(supported_languages, start=1):
             print(f"{i}) {lang}")
         print("0) Back to Solana menu")
@@ -84,7 +84,7 @@ def _choose_utility():
 
     # Print available choices
     while choice not in allowed_choices:
-        print("Please choose:")
+        print("What you wanna do?")
         print("1) Request balance")
         print("2) Get public key from wallet")
         print("0) Back to Solana menu")

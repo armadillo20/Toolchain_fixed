@@ -58,23 +58,30 @@ def create_client(cluster):
 
 def choose_wallet():
     wallet_names = _get_wallet_names()
-    print("Here are the available wallets:")
-    allowed_choices = list(map(str, range(1, len(wallet_names) + 1))) + ['0']
+    chosen_wallet = selection_menu('wallet', wallet_names)
+    if not chosen_wallet:
+        return
+    else:
+        return chosen_wallet
+
+def selection_menu(to_be_chosen, choices):
+    # Generate list of numbers corresponding to the number of choices
+    allowed_choices = list(map(str, range(1, len(choices) + 1))) + ['0']
     choice = None
 
+    # Print available choices
     while choice not in allowed_choices:
-        print("Choose a wallet:")
-        for idx, wallet_name in enumerate(wallet_names, 1):
-            print(f"{idx}) {wallet_name}")
+        print(f"Please choose {to_be_chosen}:")
+        for idx, program_name in enumerate(choices, 1):
+            print(f"{idx}) {program_name}")
         print("0) Go back")
 
         choice = input()
-
         if choice == '0':
-            return None
+            return
         elif choice in allowed_choices:
-            chosen_wallet = wallet_names[int(choice) - 1]
-            return chosen_wallet
+            # Manage choice
+            return choices[int(choice) - 1]
         else:
             print("Please choose a valid choice.")
 

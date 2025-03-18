@@ -29,7 +29,8 @@ import importlib
 import importlib.util
 from based58 import b58encode
 from solders.pubkey import Pubkey
-from solana_module.solana_utils import solana_base_path, choose_wallet, load_keypair_from_file
+from solana_module.solana_utils import solana_base_path, choose_wallet, load_keypair_from_file, selection_menu
+
 
 anchor_base_path = f"{solana_base_path}/anchor_module"
 
@@ -73,6 +74,22 @@ def find_required_accounts(instruction, idl):
     required_accounts = [_camel_to_snake(account['name']) for account in instruction_dict['accounts'] if account['name'] != 'systemProgram']
 
     return required_accounts
+
+def choose_program():
+    programs = find_initialized_programs()
+    if not programs:
+        print("No program has been initialized yet")
+        return
+    else:
+        return selection_menu('program', programs)
+
+def choose_instruction(idl):
+    instructions = find_program_instructions(idl)
+    if not instructions:
+        print("No instruction found for this program")
+        return
+    else:
+        return selection_menu('instruction', instructions)
 
 def fetch_cluster(program_name):
     file_path = f"{anchor_base_path}/.anchor_files/{program_name}/anchor_environment/Anchor.toml"

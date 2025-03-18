@@ -22,7 +22,8 @@
 
 
 from solana_module.anchor_module.anchor_utils import find_initialized_programs, generate_pda, find_program_instructions, \
-    find_args, load_idl, anchor_base_path, check_type
+    find_args, load_idl, anchor_base_path, check_type, find_required_accounts, find_signer_accounts, choose_program, \
+    choose_instruction
 
 
 # ====================================================
@@ -39,7 +40,7 @@ def get_initialized_programs():
             print(f"- {program}")
 
 def get_program_instructions():
-    chosen_program = _choose_program()
+    chosen_program = choose_program()
     if not chosen_program:
         return
     else:
@@ -54,16 +55,33 @@ def get_program_instructions():
                 print(f"- {instruction}")
 
 def get_instruction_accounts():
-    pass
-
-def get_instruction_args():
-    chosen_program = _choose_program()
+    chosen_program = choose_program()
     if not chosen_program:
         return
     else:
         idl_file_path = f'{anchor_base_path}/.anchor_files/{chosen_program}/anchor_environment/target/idl/{chosen_program}.json'
         idl = load_idl(idl_file_path)
-        chosen_instruction = _choose_instruction(idl)
+        chosen_instruction = choose_instruction(idl)
+        if not chosen_instruction:
+            return
+        else:
+            accounts = find_required_accounts(chosen_instruction, idl)
+            signer_accounts = find_signer_accounts(chosen_instruction, idl)
+            print("Accounts:")
+            for account in accounts:
+                if account in signer_accounts:
+                    print(f"- {account} (signer)")
+                else:
+                    print(f"- {account}")
+
+def get_instruction_args():
+    chosen_program = choose_program()
+    if not chosen_program:
+        return
+    else:
+        idl_file_path = f'{anchor_base_path}/.anchor_files/{chosen_program}/anchor_environment/target/idl/{chosen_program}.json'
+        idl = load_idl(idl_file_path)
+        chosen_instruction = choose_instruction(idl)
         if not chosen_instruction:
             return
         else:
@@ -72,50 +90,13 @@ def get_instruction_args():
             for arg in args:
                 print(f"- {arg['name']} ({check_type(arg['type'])})")
 
-
 def choose_program_for_pda_generation():
     repeat = True
     while repeat:
-        chosen_program = _choose_program()
+        chosen_program = choose_program()
         if not chosen_program:
             return
         else:
             pda = generate_pda(chosen_program, True)
             if pda is not None:
                 repeat = False
-
-
-
-
-# ====================================================
-# PRIVATE FUNCTIONS
-# ====================================================
-
-def _choose_program():
-    programs = find_initialized_programs()
-    return _selection_menu('program', programs)
-
-def _choose_instruction(idl):
-    instructions = find_program_instructions(idl)
-    return _selection_menu('instruction', instructions)
-
-def _selection_menu(to_be_chosen, choices):
-    # Generate list of numbers corresponding to the number of choices
-    allowed_choices = list(map(str, range(1, len(choices) + 1))) + ['0']
-    choice = None
-
-    # Print available choices
-    while choice not in allowed_choices:
-        print(f"Please choose {to_be_chosen}:")
-        for idx, program_name in enumerate(choices, 1):
-            print(f"{idx}) {program_name}")
-        print("0) Go back")
-
-        choice = input()
-        if choice == '0':
-            return
-        elif choice in allowed_choices:
-            # Manage choice
-            return choices[int(choice) - 1]
-        else:
-            print("Please choose a valid choice.")

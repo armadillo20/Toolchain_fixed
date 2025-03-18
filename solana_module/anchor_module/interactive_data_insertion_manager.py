@@ -25,9 +25,8 @@
 import asyncio
 from anchorpy import Provider, Wallet
 from solana_module.solana_utils import create_client, choose_wallet, load_keypair_from_file, solana_base_path
-from solana_module.anchor_module.anchor_utils import find_initialized_programs, find_program_instructions, \
-    find_required_accounts, find_signer_accounts, generate_pda, find_args, check_type, convert_type, \
-    fetch_cluster, anchor_base_path, load_idl
+from solana_module.anchor_module.anchor_utils import  find_required_accounts, find_signer_accounts, generate_pda, \
+    find_args, check_type, convert_type, fetch_cluster, anchor_base_path, load_idl, choose_program, choose_instruction
 from solana_module.anchor_module.transaction_manager import manage_transaction
 
 
@@ -36,43 +35,15 @@ from solana_module.anchor_module.transaction_manager import manage_transaction
 # ====================================================
 
 def choose_program_to_run():
-    # Fetch initialized programs
-    initialized_programs = find_initialized_programs()
-    if len(initialized_programs) == 0:
-        print("No program has been initialized yet.")
-        return
-
-    # Generate list of numbers corresponding to the number of found programs
-    allowed_choices = list(map(str, range(1, len(initialized_programs) + 1))) + ['0']
     repeat = True
 
     # Repeat is needed to manage the going back from the following menus
     while repeat:
-        choice = None
-        # Print available programs
-        while choice not in allowed_choices:
-            print("Which program do you want to run?")
-            for idx, program_name in enumerate(initialized_programs, 1):
-                print(f"{idx}) {program_name}")
-            print("0) Back to mode selection")
-
-            choice = input()
-            if choice == '0':
-                return
-            elif choice in allowed_choices:
-                # Manage choice
-                chosen_program = initialized_programs[int(choice) - 1]
-                idl_file_path = f'{anchor_base_path}/.anchor_files/{chosen_program}/anchor_environment/target/idl/{chosen_program}.json'
-                idl = load_idl(idl_file_path)
-                instructions = find_program_instructions(idl)
-                # If initialized instructions are found
-                if instructions:
-                    repeat = _choose_instruction_to_run(instructions, idl, chosen_program)
-                else:
-                    print("No instructions found for this program")
-                    repeat = True
-            else:
-                print("Please choose a valid choice.")
+        chosen_program = choose_program()
+        if not chosen_program:
+            return True
+        else:
+            repeat = _choose_instruction_to_run(chosen_program)
 
 
 
@@ -81,37 +52,20 @@ def choose_program_to_run():
 # PRIVATE FUNCTIONS
 # ====================================================
 
-# ====================================================
-# Instruction selection
-# ====================================================
+def _choose_instruction_to_run(program_name):
+    idl_file_path = f'{anchor_base_path}/.anchor_files/{program_name}/anchor_environment/target/idl/{program_name}.json'
+    idl = load_idl(idl_file_path)
 
-def _choose_instruction_to_run(instructions, idl, program_name):
-    # Generate list of numbers corresponding to the number of found instructions + the option to come back
-    allowed_choices = list(map(str, range(1, len(instructions) + 1))) + ['0']
     repeat = True
 
     while repeat:
-        choice = None
-        while choice not in allowed_choices:
-            print("Which instruction do you want to run?")
-            for idx, instruction in enumerate(instructions, 1):
-                print(f"{idx}) {instruction}")
-            print("0) Back to program selection")
-            choice = input()
-
-            if choice == '0':
-                return True
-            elif choice in allowed_choices:
-                # Run chosen program
-                repeat = _setup_required_accounts(instructions[int(choice) - 1], idl, program_name)
-            else:
-                print("Please choose a valid choice")
+        chosen_instruction = choose_instruction(idl)
+        if not chosen_instruction:
+            return True
+        else:
+            repeat = _setup_required_accounts(chosen_instruction, idl, program_name)
 
     return False # Needed to come back to main menu after finishing
-
-# ====================================================
-# Accounts management
-# ====================================================
 
 def _setup_required_accounts(instruction, idl, program_name):
     required_accounts = find_required_accounts(instruction, idl)
@@ -162,10 +116,6 @@ def _setup_required_accounts(instruction, idl, program_name):
             i -= 1
 
     return False
-
-# ====================================================
-# Args management
-# ====================================================
 
 def _setup_args(instruction, idl, program_name, accounts, signer_account_keypairs):
     required_args = find_args(instruction, idl)
@@ -244,15 +194,12 @@ def _manage_args(args, program_name, instruction, accounts, signer_account_keypa
 
         repeat = _manage_provider(program_name, instruction, accounts, final_args, signer_account_keypairs)
         if i == 0:
-            return True
+            if repeat:
+                return True
+            else:
+                return False
         else:
             i -= 1
-
-    return False
-
-# ====================================================
-# Provider management
-# ====================================================
 
 def _manage_provider(program_name, instruction, accounts, args, signer_account_keypairs):
     print("Now working with the transaction provider.")
@@ -265,4 +212,4 @@ def _manage_provider(program_name, instruction, accounts, args, signer_account_k
         client = create_client(cluster)
         provider_wallet = Wallet(keypair)
         provider = Provider(client, provider_wallet)
-        asyncio.run(manage_transaction(program_name, instruction, accounts, args, signer_account_keypairs, client, provider))
+        return asyncio.run(manage_transaction(program_name, instruction, accounts, args, signer_account_keypairs, client, provider))

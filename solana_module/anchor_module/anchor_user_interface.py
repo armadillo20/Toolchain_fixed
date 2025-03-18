@@ -24,7 +24,7 @@
 import asyncio
 from solana_module.anchor_module.automatic_data_insertion_manager import run_execution_trace
 from solana_module.anchor_module.anchor_utilities import choose_program_for_pda_generation, get_initialized_programs, \
-    get_program_instructions, get_instruction_args
+    get_program_instructions, get_instruction_args, get_instruction_accounts
 from solana_module.anchor_module.program_compiler_and_deployer import compile_programs
 from solana_module.anchor_module.interactive_data_insertion_manager import choose_program_to_run
 
@@ -70,8 +70,11 @@ def _choose_running_mode():
         # Manage choice
         choice = input()
         if choice == "1":
-            choose_program_to_run()
-            return
+            repeat = choose_program_to_run()
+            if repeat:
+                choice = None
+            else:
+                return
         elif choice == "2":
             asyncio.run(run_execution_trace())
             return
@@ -87,7 +90,7 @@ def _choose_utility():
     # Interactive menu
     while choice != "0":
         # Print options
-        print("Please choose:")
+        print("What you wanna do?")
         print("1) Get available programs")
         print("2) Get available instructions")
         print("3) Get instruction required accounts")
@@ -102,7 +105,7 @@ def _choose_utility():
         if choice == "2":
             get_program_instructions()
         if choice == "3":
-            pass
+            get_instruction_accounts()
         if choice == "4":
             get_instruction_args()
         elif choice == "5":

@@ -22,7 +22,7 @@
 
 
 import asyncio
-from solana_module.solana_utils import choose_wallet, create_client
+from solana_module.solana_utils import choose_wallet, create_client, load_keypair_from_file, solana_base_path
 
 
 # ====================================================
@@ -30,19 +30,17 @@ from solana_module.solana_utils import choose_wallet, create_client
 # ====================================================
 
 def request_balance():
-    keypair = choose_wallet()
-    if keypair is None:
-        return
-    client = _manage_client_creation()
-    asyncio.run(_print_account_balance(client, keypair.pubkey()))
+    chosen_wallet = choose_wallet()
+    if chosen_wallet is not None:
+        keypair = load_keypair_from_file(f"{solana_base_path}/solana_wallets/{chosen_wallet}")
+        client = _manage_client_creation()
+        asyncio.run(_print_account_balance(client, keypair.pubkey()))
 
 def get_public_key():
-    keypair = choose_wallet()
-    if keypair is None:
-        return
-    else:
+    chosen_wallet = choose_wallet()
+    if chosen_wallet is not None:
+        keypair = load_keypair_from_file(f"{solana_base_path}/solana_wallets/{chosen_wallet}")
         print(f"The public key is {keypair.pubkey()}")
-        print(f"The private key is {keypair.secret()}")
 
 
 

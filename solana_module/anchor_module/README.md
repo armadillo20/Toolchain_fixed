@@ -29,7 +29,12 @@
   - Transaction size in bytes
   - Transaction fees in Lamports
   - If you wrote True to send transaction, transaction hash.
-### - PDA Key Generator, useful to generate keys while writing execution traces
+### - Utilities (for generating execution traces)
+- Get initialized programs
+- Get program instructions
+- Get instruction accounts (and if they are signer)
+- Get instruction arguments (and types)
+- PDA Key Generator, to generate PDA keys
 
 # Please note:
 - Compiling may take a while, please be patient

@@ -64,7 +64,7 @@ async def manage_transaction(program_name, instruction, accounts, args, signer_a
             transaction = await send_transaction(provider, tx)
             print(f'Transaction sent. Hash: {transaction}')
         elif choice == '0':
-            return
+            return False
         else:
             print('Invalid option. Please choose a valid option.')
 
