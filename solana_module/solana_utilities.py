@@ -62,7 +62,19 @@ def close_program():
                 cluster = choose_cluster()
                 if cluster is not None:
                     repeat2 = False
-                    perform_program_closure(program_id, cluster, chosen_wallet)
+
+                    # Confirmation phase
+                    allowed_choices = ['y', 'Y', 'n', 'N']
+                    choice = None
+                    while choice not in allowed_choices:
+                        print('Are you sure you want to close the program? (y/n)')
+                        choice = input()
+                        if choice == 'y' or choice == 'Y':
+                            perform_program_closure(program_id, cluster, chosen_wallet)
+                        elif choice == 'n' or choice == 'N':
+                            return
+                        else:
+                            print('Please insert a valid choice.')
 
 
 

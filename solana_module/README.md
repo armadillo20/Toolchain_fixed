@@ -11,3 +11,4 @@
 ## Available functionalities:
 - Request account balance of a wallet
 - Extract public key from a wallet
+- Close a program on the blockchain

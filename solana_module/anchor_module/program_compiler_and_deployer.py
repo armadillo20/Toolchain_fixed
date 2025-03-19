@@ -21,12 +21,13 @@
 # THE SOFTWARE.
 
 
+import json
 import toml
 import re
 import os
 import platform
 from solana_module.solana_utils import choose_wallet, run_command, choose_cluster
-from solana_module.anchor_module.anchor_utils import anchor_base_path
+from solana_module.anchor_module.anchor_utils import anchor_base_path, load_idl
 
 
 # ====================================================
@@ -43,7 +44,7 @@ def compile_programs():
     file_names, programs = _read_rs_files(programs_path)
 
     # For each program
-    for file_name,program in zip(file_names,programs):
+    for file_name,program in zip(file_names, programs):
         print(f"Compiling program: {file_name}")
         file_name_without_extension = file_name.removesuffix(".rs") # Get filename without .rs extension
 
@@ -51,6 +52,8 @@ def compile_programs():
         done = _compile_program(file_name_without_extension, operating_system, program) # Compile program
         if not done:
             return
+
+        _convert_idl_for_anchorpy(file_name_without_extension)
 
         # Deploying phase
         allowed_choice = ['y', 'n', 'Y', 'N']
@@ -129,6 +132,7 @@ def _perform_anchor_build(program_name, program, operating_system):
     # Define Anchor build commands to be executed
     build_commands = [
         f"cd {anchor_base_path}/.anchor_files/{program_name}/anchor_environment",  # Change directory to new anchor environment
+        "cargo update -p bytemuck_derive@1.9.1 --precise 1.8.1",
         "anchor build"  # Build program
     ]
 
@@ -160,7 +164,7 @@ def _run_anchor_build_commands(program_name, program, operating_system, build_co
     if result is None:
         print("Unsupported operating system.")
         return False
-    elif result.stderr:
+    elif '-Znext' in result.stderr:
         # try by imposing cargo version 3
         _impose_cargo_lock_version(program_name)
         result = run_command(operating_system, build_concatenated_command)
@@ -202,7 +206,61 @@ def _impose_cargo_lock_version(program_name):
             line = re.sub(r'^version = \d+', 'version = 3', line)
             file.write(line)
 
+def _convert_idl_for_anchorpy(program_name):
+    idl_file_path = f'{anchor_base_path}/.anchor_files/{program_name}/anchor_environment/target/idl/{program_name}.json'
+    idl_31 = load_idl(idl_file_path)
 
+    idl_29 = {
+        "version": idl_31["metadata"]["version"],
+        "name": idl_31["metadata"]["name"],
+        "instructions": [],
+        "accounts": [],
+        "errors": idl_31.get("errors", [])
+    }
+
+    # Convert instructions
+    for instruction in idl_31["instructions"]:
+        converted_instruction = {
+            "name": instruction["name"],
+            "accounts": [],
+            "args": instruction.get("args", [])
+        }
+
+        # Convert instruction accounts
+        for account in instruction["accounts"]:
+            converted_account = {
+                "name": _snake_to_camel(account["name"]),
+                "isMut": account.get("writable", False),
+                "isSigner": account.get("signer", False)
+            }
+            converted_instruction["accounts"].append(converted_account)
+
+        idl_29["instructions"].append(converted_instruction)
+
+    # Convert accounts
+    type_definitions = {t["name"]: t["type"] for t in idl_31.get("types", [])}
+
+    for account in idl_31.get("accounts", []):
+        account_name = account["name"]
+
+        converted_account = {
+            "name": account_name,
+            "type": type_definitions.get(account_name, {})
+        }
+
+        # Se il tipo è un struct, rinominiamo pubkey -> publicKey
+        if "fields" in converted_account["type"]:
+            for field in converted_account["type"]["fields"]:
+                if field["type"] == "pubkey":
+                    field["type"] = "publicKey"
+
+        idl_29["accounts"].append(converted_account)
+
+    with open(idl_file_path, 'w') as file:
+        file.write(json.dumps(idl_29))
+
+def _snake_to_camel(snake_str):
+    return re.sub(r'_([a-z])', lambda match: match.group(1).upper(), snake_str)
 
 # ====================================================
 # Deploying phase functions

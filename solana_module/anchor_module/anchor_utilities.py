@@ -115,9 +115,20 @@ def close_anchor_program():
     cluster, wallet_name = _fetch_cluster_and_wallet(chosen_program)
     program_id = str(_get_program_id(chosen_program))
 
-    result = perform_program_closure(program_id, cluster, wallet_name)
-    if not result.stderr:
-        _remove_initialized_program(chosen_program)
+    # Confirmation phase
+    allowed_choices = ['y', 'Y', 'n', 'N']
+    choice = None
+    while choice not in allowed_choices:
+        print('Are you sure you want to close the program? (y/n)')
+        choice = input()
+        if choice == 'y' or choice == 'Y':
+            result = perform_program_closure(program_id, cluster, wallet_name)
+            if not result.stderr:
+                _remove_initialized_program(chosen_program)
+        elif choice == 'n' or choice == 'N':
+            return
+        else:
+            print('Please insert a valid choice.')
 
 
 
