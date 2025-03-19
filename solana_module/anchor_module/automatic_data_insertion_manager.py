@@ -28,10 +28,10 @@ from solders.pubkey import Pubkey
 from anchorpy import Wallet, Provider
 from solana_module.anchor_module.transaction_manager import build_transaction, measure_transaction_size, \
     compute_transaction_fees, send_transaction
-from solana_module.solana_utils import load_keypair_from_file, solana_base_path, create_client
+from solana_module.solana_utils import load_keypair_from_file, solana_base_path, create_client, selection_menu
 from solana_module.anchor_module.anchor_utils import anchor_base_path, find_initialized_programs, \
     find_program_instructions, find_required_accounts, find_signer_accounts, find_args, check_type, convert_type, \
-    fetch_cluster
+    fetch_cluster, load_idl
 
 
 # ====================================================
@@ -46,13 +46,12 @@ async def run_execution_trace():
         return
 
     results = []
-    print(f"Place execution trace in the in the execution_traces folder of the Anchor module")
-    print("Insert name of the execution trace file")
-    file_name = input()
-    csv_file = _read_csv(f"{anchor_base_path}/execution_traces/{file_name}")
-    if csv_file is None:
-        print("Execution trace not found")
+
+    execution_traces = _find_execution_traces()
+    file_name = selection_menu('execution trace', execution_traces)
+    if file_name is None:
         return
+    csv_file = _read_csv(f"{anchor_base_path}/execution_traces/{file_name}")
 
     # For each execution trace
     for index, row in enumerate(csv_file, start=1):
@@ -70,7 +69,9 @@ async def run_execution_trace():
             return
 
         # Manage instruction
-        instructions, idl = find_program_instructions(program_name)
+        idl_file_path = f'{anchor_base_path}/.anchor_files/{program_name}/anchor_environment/target/idl/{program_name}.json'
+        idl = load_idl(idl_file_path)
+        instructions = find_program_instructions(idl)
         instruction = execution_trace[2]
         if instruction not in instructions:
             print(f"Instruction {instruction} not found for the program {program_name} (execution trace {trace_id}).")
@@ -155,6 +156,14 @@ async def run_execution_trace():
 # ====================================================
 # PRIVATE FUNCTIONS
 # ====================================================
+
+def _find_execution_traces():
+    path = f"{anchor_base_path}/execution_traces/"
+    if not os.path.exists(path):
+        print(f"Error: Folder '{path}' does not exist.")
+        return []
+
+    return [f for f in os.listdir(path) if f.lower().endswith('.csv')]
 
 def _read_csv(file_path):
     if os.path.exists(file_path):
