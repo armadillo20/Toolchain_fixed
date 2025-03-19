@@ -43,6 +43,10 @@ def compile_programs():
     # Read programs
     file_names, programs = _read_rs_files(programs_path)
 
+    if not file_names:
+        print('No programs to compile in anchor_programs folder.')
+        return
+
     # For each program
     for file_name,program in zip(file_names, programs):
         print(f"Compiling program: {file_name}")

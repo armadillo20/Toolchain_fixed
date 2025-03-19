@@ -73,12 +73,15 @@ def get_instruction_accounts():
         else:
             accounts = find_required_accounts(chosen_instruction, idl)
             signer_accounts = find_signer_accounts(chosen_instruction, idl)
-            print("Accounts:")
-            for account in accounts:
-                if account in signer_accounts:
-                    print(f"- {account} (signer)")
-                else:
-                    print(f"- {account}")
+            if len(accounts) == 0:
+                print("No accounts required by this instruction.")
+            else:
+                print("Accounts:")
+                for account in accounts:
+                    if account in signer_accounts:
+                        print(f"- {account} (signer)")
+                    else:
+                        print(f"- {account}")
 
 def get_instruction_args():
     chosen_program = choose_program()
@@ -92,18 +95,21 @@ def get_instruction_args():
             return
         else:
             args = find_args(chosen_instruction, idl)
-            print("Arguments:")
-            for arg in args:
-                array_type, array_length = check_if_array(arg)
-                # If it's not an array
-                if array_type is None and array_length is None:
-                    print(f"- {arg['name']} ({check_type(arg['type'])})")
-                # If it's an array of unsupported type
-                elif array_type is None and array_length is not None:
-                    print(f"- {arg['name']} (array of unsupported type)")
-                # If it's a supported type array
-                else:
-                    print(f"- {arg['name']} ({array_type} array of length {array_length})")
+            if len(args) == 0:
+                print("No arguments required by this instruction.")
+            else:
+                print("Arguments:")
+                for arg in args:
+                    array_type, array_length = check_if_array(arg)
+                    # If it's not an array
+                    if array_type is None and array_length is None:
+                        print(f"- {arg['name']} ({check_type(arg['type'])})")
+                    # If it's an array of unsupported type
+                    elif array_type is None and array_length is not None:
+                        print(f"- {arg['name']} (array of unsupported type)")
+                    # If it's a supported type array
+                    else:
+                        print(f"- {arg['name']} ({array_type} array of length {array_length})")
 
 def choose_program_for_pda_generation():
     repeat = True
