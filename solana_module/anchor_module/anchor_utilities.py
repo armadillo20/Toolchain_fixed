@@ -28,7 +28,7 @@ import shutil
 import os
 from solana_module.anchor_module.anchor_utils import find_initialized_programs, generate_pda, find_program_instructions, \
     find_args, load_idl, anchor_base_path, check_type, find_required_accounts, find_signer_accounts, choose_program, \
-    choose_instruction
+    choose_instruction, check_if_array
 from solana_module.solana_utils import perform_program_closure
 
 
@@ -94,7 +94,16 @@ def get_instruction_args():
             args = find_args(chosen_instruction, idl)
             print("Arguments:")
             for arg in args:
-                print(f"- {arg['name']} ({check_type(arg['type'])})")
+                array_type, array_length = check_if_array(arg)
+                # If it's not an array
+                if array_type is None and array_length is None:
+                    print(f"- {arg['name']} ({check_type(arg['type'])})")
+                # If it's an array of unsupported type
+                elif array_type is None and array_length is not None:
+                    print(f"- {arg['name']} (array of unsupported type)")
+                # If it's a supported type array
+                else:
+                    print(f"- {arg['name']} ({array_type} array of length {array_length})")
 
 def choose_program_for_pda_generation():
     repeat = True

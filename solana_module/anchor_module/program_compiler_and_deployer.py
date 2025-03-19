@@ -248,7 +248,7 @@ def _convert_idl_for_anchorpy(program_name):
             "type": type_definitions.get(account_name, {})
         }
 
-        # Se il tipo è un struct, rinominiamo pubkey -> publicKey
+        # If it is a struct, we rename pubkey to publicKey
         if "fields" in converted_account["type"]:
             for field in converted_account["type"]["fields"]:
                 if field["type"] == "pubkey":
@@ -261,6 +261,7 @@ def _convert_idl_for_anchorpy(program_name):
 
 def _snake_to_camel(snake_str):
     return re.sub(r'_([a-z])', lambda match: match.group(1).upper(), snake_str)
+
 
 # ====================================================
 # Deploying phase functions
@@ -333,7 +334,6 @@ def _get_deploy_details(output):
     signature = signature_match.group(1) if signature_match else None
 
     return program_id, signature
-
 
 
 # ====================================================

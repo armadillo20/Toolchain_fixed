@@ -92,9 +92,9 @@ def _choose_utility():
         # Print options
         print("What you wanna do?")
         print("1) Get available programs")
-        print("2) Get available instructions")
-        print("3) Get instruction required accounts")
-        print("4) Get instruction required arguments")
+        print("2) Get program instructions")
+        print("3) Get instruction accounts")
+        print("4) Get instruction args")
         print("5) Generate PDA key")
         print("6) Close and remove initialized Anchor program")
         print("0) Back to Anchor menu")

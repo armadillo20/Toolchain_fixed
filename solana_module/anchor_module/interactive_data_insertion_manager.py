@@ -25,8 +25,9 @@
 import asyncio
 from anchorpy import Provider, Wallet
 from solana_module.solana_utils import create_client, choose_wallet, load_keypair_from_file, solana_base_path
-from solana_module.anchor_module.anchor_utils import  find_required_accounts, find_signer_accounts, generate_pda, \
-    find_args, check_type, convert_type, fetch_cluster, anchor_base_path, load_idl, choose_program, choose_instruction
+from solana_module.anchor_module.anchor_utils import find_required_accounts, find_signer_accounts, generate_pda, \
+    find_args, check_type, convert_type, fetch_cluster, anchor_base_path, load_idl, choose_program, choose_instruction, \
+    check_if_array
 from solana_module.anchor_module.transaction_manager import manage_transaction
 
 
@@ -136,12 +137,11 @@ def _manage_args(args, program_name, instruction, accounts, signer_account_keypa
             print(f"Insert {arg['name']} value. ", end="", flush=True)
 
             # Arrays management
-            if isinstance(arg['type'], dict) and 'array' in arg['type']:
-                array_type = check_type(arg['type']['array'][0])
-                if array_type is None:
-                    print("Unsupported type for arg {arg['name']}")
-                    return False
-                array_length = arg['type']['array'][1]
+            array_type, array_length = check_if_array(arg)
+            if array_type is None and array_length is not None:
+                print(f"Unsupported type for arg {arg['name']}")
+                return False
+            elif array_type is not None and array_length is not None:
                 print(f"It is an array of {array_type} type and length {array_length}. Please insert array values separated by spaces (Insert 00 to go back to previous section).")
                 value = input()
                 if value == '00':

@@ -21,7 +21,7 @@
   - The required accounts, written in this way:
     - If the account is a wallet (inside the "solana_wallet" folder), write W:<<wallet_name>> (please note that file extension must be included)
     - If the account is a PDA (you can generate it with the provided tool), write: P:<<pda_key>>
-  - The required args
+  - The required args (if it is an array, please insert values separated by spaces)
   - Provider wallet (this will be used to send transaction). Please write the name of the wallet file as: <<wallet_name>> with its file extension
   - True if you want to send the prepared transaction
 - The output file will have the structure of:

@@ -163,6 +163,16 @@ def find_args(instruction, idl):
 
     return required_args
 
+def check_if_array(arg):
+    if isinstance(arg['type'], dict) and 'array' in arg['type']:
+        array_type = check_type(arg['type']['array'][0])
+        array_length = arg['type']['array'][1]
+        if array_type is None:
+            return None, array_length
+        return array_type, array_length
+    else:
+        return None, None
+
 def check_type(type):
     if (type == "u8" or type == "u16" or type == "u32" or type == "u64" or type == "u128" or type == "u256"
             or type == "i8" or type == "i16" or type == "i32" or type == "i64" or type == "i128" or type == "i256"):

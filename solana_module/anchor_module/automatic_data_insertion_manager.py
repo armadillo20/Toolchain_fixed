@@ -31,7 +31,7 @@ from solana_module.anchor_module.transaction_manager import build_transaction, m
 from solana_module.solana_utils import load_keypair_from_file, solana_base_path, create_client, selection_menu
 from solana_module.anchor_module.anchor_utils import anchor_base_path, find_initialized_programs, \
     find_program_instructions, find_required_accounts, find_signer_accounts, find_args, check_type, convert_type, \
-    fetch_cluster, load_idl
+    fetch_cluster, load_idl, check_if_array
 
 
 # ====================================================
@@ -108,14 +108,38 @@ async def run_execution_trace():
         required_args = find_args(instruction, idl)
         final_args = dict()
         for arg in required_args:
-            type = check_type(arg["type"])
-            if type is None:
-                print(f"Unsupported type for arg {arg['name']}")
-                return
+            # Manage arrays
+            array_type, array_length = check_if_array(arg)
+            if array_type is not None and array_length is not None:
+                array_values = execution_trace[i].split()
+
+                # Check if array has correct length
+                if len(array_values) != array_length:
+                    print(f"Error: Expected array of length {array_length}, but got {len(array_values)}")
+                    return
+
+                # Convert array elements basing on the type
+                valid_values = []
+                for j in range(len(array_values)):
+                    converted_value = convert_type(array_type, array_values[j])
+                    if converted_value is not None:
+                        valid_values.append(converted_value)
+                    else:
+                        print(f"Invalid input at index {j}. Please try again.")
+                        return
+
+                final_args[arg['name']] = valid_values
+
+            # Manage classical args
             else:
+                type = check_type(arg["type"])
+                if type is None:
+                    print(f"Unsupported type for arg {arg['name']}")
+                    return
                 converted_value = convert_type(type, execution_trace[i])
                 final_args[arg['name']] = converted_value
-                i += 1
+
+            i += 1
 
         # Manage provider
         provider_keypair_path = f"{solana_base_path}/solana_wallets/{execution_trace[i]}"
@@ -136,7 +160,7 @@ async def run_execution_trace():
         csv_row = [trace_id, size, fees]
 
         i += 1
-        if execution_trace[i] == 'True':
+        if execution_trace[i].lower() == 'true':
             transaction_hash = await send_transaction(provider, transaction)
             csv_row.append(transaction_hash)
 
