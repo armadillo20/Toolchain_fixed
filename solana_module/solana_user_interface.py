@@ -21,7 +21,7 @@
 # THE SOFTWARE.
 
 
-from solana_module.solana_utilities import request_balance, get_public_key
+from solana_module.solana_utilities import request_balance, get_public_key, close_program
 from solana_module.anchor_module import anchor_user_interface
 # ADD HERE NEW SOLANA LANGUAGES REQUIRED IMPORTS (STARTING FROM THE PROJECT ROOT)
 
@@ -78,15 +78,14 @@ def _choose_language():
             print("Invalid choice. Please insert a valid choice.")
 
 def _choose_utility():
-    allowed_choices = ['1', '2', '0']
-
     choice = None
 
     # Print available choices
-    while choice not in allowed_choices:
+    while choice != '0':
         print("What you wanna do?")
         print("1) Request balance")
         print("2) Get public key from wallet")
+        print("3) Close program on blockchain")
         print("0) Back to Solana menu")
 
         choice = input()
@@ -97,6 +96,8 @@ def _choose_utility():
         elif choice == '2':
             get_public_key()
             choice = None
+        elif choice == '3':
+            close_program()
         elif choice == '0':
             return
         else:

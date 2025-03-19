@@ -20,10 +20,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-
+import importlib
+import sys
+from pathlib import Path
+import toml
+import shutil
+import os
 from solana_module.anchor_module.anchor_utils import find_initialized_programs, generate_pda, find_program_instructions, \
     find_args, load_idl, anchor_base_path, check_type, find_required_accounts, find_signer_accounts, choose_program, \
     choose_instruction
+from solana_module.solana_utils import perform_program_closure
 
 
 # ====================================================
@@ -100,3 +106,72 @@ def choose_program_for_pda_generation():
             pda = generate_pda(chosen_program, True)
             if pda is not None:
                 repeat = False
+
+def close_anchor_program():
+    chosen_program = choose_program()
+    if not chosen_program:
+        return
+
+    cluster, wallet_name = _fetch_cluster_and_wallet(chosen_program)
+    program_id = str(_get_program_id(chosen_program))
+
+    result = perform_program_closure(program_id, cluster, wallet_name)
+    if not result.stderr:
+        _remove_initialized_program(chosen_program)
+
+
+
+
+# ====================================================
+# PRIVATE FUNCTIONS
+# ====================================================
+
+def _fetch_cluster_and_wallet(program_name):
+    file_path = f"{anchor_base_path}/.anchor_files/{program_name}/anchor_environment/Anchor.toml"
+    config = toml.load(file_path)
+
+    # Edit values
+    cluster = config['provider']['cluster']
+    wallet_path = config['provider']['wallet']
+    if wallet_path is None:
+        return None, None
+    wallet_name = wallet_path.removeprefix('../../../../solana_wallets/')
+    return cluster, wallet_name
+
+def _get_program_id(program_name):
+    # Update absolute path in the root folder of the package
+    program_root = Path(f"{anchor_base_path}/.anchor_files/{program_name}").resolve()
+
+    if not program_root.exists():
+        raise FileNotFoundError(f"The folder {program_root} does not exist. Check program name")
+
+    # Path to program id
+    module_path = program_root / "anchorpy_files" / "program_id.py"
+
+    if not module_path.exists():
+        raise FileNotFoundError(f"The file {module_path} does not exist. Verify instruction name.")
+
+    # Add program root to sys.path to enable relative imports
+    if str(program_root) not in sys.path:
+        sys.path.append(str(program_root))
+
+    # Complete name of the module to import
+    module_name = f"anchorpy_files.program_id"
+
+    # Dynamic import of the module
+    module = importlib.import_module(module_name)
+
+    # Verify that the function exists
+    if not hasattr(module, 'PROGRAM_ID'):
+        raise AttributeError(f"The module {module_name} does not contain the program id.")
+
+    return getattr(module, "PROGRAM_ID")
+
+def _remove_initialized_program(program_name):
+    folder_to_remove = f"{anchor_base_path}/.anchor_files/{program_name}"
+
+    if os.path.exists(folder_to_remove):  # Check if folder exists
+        shutil.rmtree(folder_to_remove)
+        print("Program removed from toolchain.")
+    else:
+        print("Program folder does not exists.")

@@ -25,6 +25,8 @@ import json
 import os
 from solders.keypair import Keypair
 from solana.rpc.async_api import AsyncClient
+import subprocess
+import platform
 
 
 solana_base_path = "solana_module"
@@ -59,10 +61,11 @@ def create_client(cluster):
 def choose_wallet():
     wallet_names = _get_wallet_names()
     chosen_wallet = selection_menu('wallet', wallet_names)
-    if not chosen_wallet:
-        return
-    else:
-        return chosen_wallet
+    return chosen_wallet
+
+def choose_cluster():
+    allowed_choices = ['Localnet', 'Devnet', 'Mainnet']
+    return selection_menu('cluster', allowed_choices)
 
 def selection_menu(to_be_chosen, choices):
     # Generate list of numbers corresponding to the number of choices
@@ -85,6 +88,31 @@ def selection_menu(to_be_chosen, choices):
         else:
             print("Please choose a valid choice.")
 
+def perform_program_closure(program_id, cluster, wallet_name):
+    command_cluster = _associate_command_cluster(cluster)
+    if command_cluster is None:
+        return
+
+    command = f"solana program close {program_id} --keypair {solana_base_path}/solana_wallets/{wallet_name} --url {command_cluster} --bypass-warning"
+    operating_system = platform.system()
+    result = run_command(operating_system, command)
+    if result.stderr:
+        print(result.stderr)
+    else:
+        print(result.stdout)
+    return result
+
+def run_command(operating_system, command):
+    if operating_system == "Windows":
+        result = subprocess.run(["wsl", command], capture_output=True, text=True) # On Windows, use WSL to execute commands in a Linux shell
+    elif platform.system() == "Darwin" or platform.system() == "Linux":
+        result = subprocess.run(command, shell=True, capture_output=True, text=True)
+    else:
+        result = None
+
+    return result
+
+
 
 
 
@@ -103,3 +131,13 @@ def _get_wallet_names():
         wallet_names = [f for f in os.listdir(wallets_path) if f.endswith(".json")]
 
     return wallet_names
+
+def _associate_command_cluster(cluster):
+    if cluster == "Localnet":
+        return 'localhost'
+    elif cluster == "Devnet":
+        return 'devnet'
+    elif cluster == "Mainnet":
+        return 'mainnet'
+    else:
+        return None

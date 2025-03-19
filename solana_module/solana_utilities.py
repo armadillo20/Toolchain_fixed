@@ -22,7 +22,8 @@
 
 
 import asyncio
-from solana_module.solana_utils import choose_wallet, create_client, load_keypair_from_file, solana_base_path
+from solana_module.solana_utils import choose_wallet, create_client, load_keypair_from_file, solana_base_path, \
+    choose_cluster, perform_program_closure
 
 
 # ====================================================
@@ -41,6 +42,27 @@ def get_public_key():
     if chosen_wallet is not None:
         keypair = load_keypair_from_file(f"{solana_base_path}/solana_wallets/{chosen_wallet}")
         print(f"The public key is {keypair.pubkey()}")
+
+def close_program():
+    repeat1 = True
+    while repeat1:
+        print('Insert the program ID to close (or 0 to go back).')
+        program_id = input()
+        if program_id == '0':
+            return
+
+        repeat2 = True
+        while repeat2:
+            chosen_wallet = choose_wallet()
+            if chosen_wallet is None:
+                repeat2 = False
+            else:
+                repeat1 = False
+
+                cluster = choose_cluster()
+                if cluster is not None:
+                    repeat2 = False
+                    perform_program_closure(program_id, cluster, chosen_wallet)
 
 
 

@@ -23,10 +23,9 @@
 
 import toml
 import re
-import subprocess
 import os
 import platform
-from solana_module.solana_utils import solana_base_path, choose_wallet
+from solana_module.solana_utils import choose_wallet, run_command, choose_cluster
 from solana_module.anchor_module.anchor_utils import anchor_base_path
 
 
@@ -142,7 +141,7 @@ def _perform_anchor_build(program_name, program, operating_system):
 def _run_anchor_initialization_commands(operating_system, initialization_concatenated_command):
     # Initialize Anchor project
     print("Initializing Anchor project...")
-    result = _run_command(operating_system, initialization_concatenated_command)
+    result = run_command(operating_system, initialization_concatenated_command)
 
     # Error checks
     if result is None:
@@ -157,14 +156,14 @@ def _run_anchor_initialization_commands(operating_system, initialization_concate
 def _run_anchor_build_commands(program_name, program, operating_system, build_concatenated_command):
     print("Building Anchor program, this may take a while... Please be patient.")
     _write_program_in_lib_rs(program_name, program)
-    result = _run_command(operating_system, build_concatenated_command)
+    result = run_command(operating_system, build_concatenated_command)
     if result is None:
         print("Unsupported operating system.")
         return False
     elif result.stderr:
         # try by imposing cargo version 3
         _impose_cargo_lock_version(program_name)
-        result = _run_command(operating_system, build_concatenated_command)
+        result = run_command(operating_system, build_concatenated_command)
         if result.stderr:
             print(result.stderr)
 
@@ -215,24 +214,7 @@ def _deploy_program(program_name, operating_system):
         return
 
     # Manage cluster choice
-    allowed_choices = ["1", "2", "3"]
-    choice = None
-    cluster = None
-
-    while choice not in allowed_choices:
-        print("Where do you want to deploy program?")
-        print("1. Localnet")
-        print("2. Devnet")
-        print("3. Mainnet")
-        choice = input()
-        if choice == "1":
-            cluster = "Localnet"
-        elif choice == "2":
-            cluster = "Devnet"
-        elif choice == "3":
-            cluster = "Mainnet"
-        else:
-            print("Please insert a valid choice.")
+    cluster = choose_cluster()
 
     # Modify generated file to set chosen cluster
     _modify_cluster_wallet(program_name, cluster, wallet_name)
@@ -265,7 +247,7 @@ def _modify_cluster_wallet(program_name, cluster, wallet_name):
 
 def _run_deploying_commands(operating_system, deploy_concatenated_command):
     print("Deploying program...")
-    result = _run_command(operating_system, deploy_concatenated_command)
+    result = run_command(operating_system, deploy_concatenated_command)
     if result is None:
         print("Unsupported operating system.")
         return None
@@ -309,26 +291,10 @@ def _initialize_anchorpy(program_name, program_id, operating_system):
 
 def _run_initializing_anchorpy_commands(operating_system, anchorpy_initialization_command):
     print("Initializing anchorpy...")
-    result = _run_command(operating_system, anchorpy_initialization_command)
+    result = run_command(operating_system, anchorpy_initialization_command)
     if result is None:
         print("Unsupported operating system.")
     elif result.stderr:
         print(result.stderr)
     else:
         print("Anchorpy initialized successfully")
-
-
-
-# ====================================================
-# Utils functions
-# ====================================================
-
-def _run_command(operating_system, command):
-    if operating_system == "Windows":
-        result = subprocess.run(["wsl", command], capture_output=True, text=True) # On Windows, use WSL to execute commands in a Linux shell
-    elif platform.system() == "Darwin" or platform.system() == "Linux":
-        result = subprocess.run(command, shell=True, capture_output=True, text=True)
-    else:
-        result = None
-
-    return result
