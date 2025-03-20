@@ -9,6 +9,7 @@
 ### - Compile and eventually deploy new anchor programs
   - Put your Anchor programs in .rs format inside the "anchor_programs" folder of the Anchor module
   - The tool will guide you to compile and eventually deploy each program inside the "anchor_programs" directory
+  - Please remove .rs file from the "anchor_programs" folder after deploying, or the next time you compile it will give you an error
 ### - Run functions of a compiled and deployed Anchor program (must be compiled and deployed through the given toolchain). It can be done via:
  #### - Interactive procedure:
 - The tool will guide you for inserting the required parameters, also letting you know the required types

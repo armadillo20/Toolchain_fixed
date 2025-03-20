@@ -268,14 +268,11 @@ def _manage_seed_insertion(program_name, n_seeds):
                 seeds[i] = seed
                 i += 1
             elif choice == "3":
-                seed = ''
-                while len(seed) != 32:
-                    print("Insert seed. It must be 32 characters long. (Insert 0 to go back)")
-                    seed = input()
-                    if seed == '0':
-                        choice = None
-                        break
-                seeds[i] = bytes(seed, 'utf-8')
+                print("Insert seed (Insert 0 to go back)")
+                seed = input()
+                if seed == '0':
+                    return None, True
+                seeds[i] = seed.encode()
                 i += 1
             elif choice == "0":
                 if i == 0:

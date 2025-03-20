@@ -57,7 +57,9 @@ def compile_programs():
         if not done:
             return
 
-        _convert_idl_for_anchorpy(file_name_without_extension)
+        result =_convert_idl_for_anchorpy(file_name_without_extension)
+        if result is None:
+            return
 
         # Deploying phase
         allowed_choice = ['y', 'n', 'Y', 'N']
@@ -136,7 +138,7 @@ def _perform_anchor_build(program_name, program, operating_system):
     # Define Anchor build commands to be executed
     build_commands = [
         f"cd {anchor_base_path}/.anchor_files/{program_name}/anchor_environment",  # Change directory to new anchor environment
-        "cargo update -p bytemuck_derive@1.9.1 --precise 1.8.1",
+        "cargo update -p bytemuck_derive@1.9.2 --precise 1.8.1", # bytemyck_derive is now 1.9.2, but can change frequently
         "anchor build"  # Build program
     ]
 
@@ -212,6 +214,11 @@ def _impose_cargo_lock_version(program_name):
 
 def _convert_idl_for_anchorpy(program_name):
     idl_file_path = f'{anchor_base_path}/.anchor_files/{program_name}/anchor_environment/target/idl/{program_name}.json'
+
+    if not os.path.exists(idl_file_path):
+        print('Error during build')
+        return
+
     idl_31 = load_idl(idl_file_path)
 
     idl_29 = {
@@ -262,6 +269,8 @@ def _convert_idl_for_anchorpy(program_name):
 
     with open(idl_file_path, 'w') as file:
         file.write(json.dumps(idl_29))
+
+    return True
 
 def _snake_to_camel(snake_str):
     return re.sub(r'_([a-z])', lambda match: match.group(1).upper(), snake_str)
