@@ -146,7 +146,7 @@ async def run_execution_trace():
         keypair = load_keypair_from_file(provider_keypair_path)
         if keypair is None:
             print("Provider wallet not found.")
-        cluster = fetch_cluster(program_name)
+        cluster, is_deployed = fetch_cluster(program_name)
         client = create_client(cluster)
         provider_wallet = Wallet(keypair)
         provider = Provider(client, provider_wallet)
@@ -161,8 +161,11 @@ async def run_execution_trace():
 
         i += 1
         if execution_trace[i].lower() == 'true':
-            transaction_hash = await send_transaction(provider, transaction)
-            csv_row.append(transaction_hash)
+            if is_deployed:
+                transaction_hash = await send_transaction(provider, transaction)
+                csv_row.append(transaction_hash)
+            else:
+                csv_row.append('Program not deployed with toolchain')
 
         # Append results
         results.append(csv_row)

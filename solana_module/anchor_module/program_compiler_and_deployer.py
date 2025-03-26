@@ -53,13 +53,17 @@ def compile_programs():
         file_name_without_extension = file_name.removesuffix(".rs") # Get filename without .rs extension
 
         # Compiling phase
-        done = _compile_program(file_name_without_extension, operating_system, program) # Compile program
+        done, program_id = _compile_program(file_name_without_extension, operating_system, program) # Compile program
         if not done:
             return
 
         result =_convert_idl_for_anchorpy(file_name_without_extension)
         if result is None:
             return
+
+        # Anchorpy initialization phase
+        if program_id: # If deploy succeed, initialize anchorpy
+            _initialize_anchorpy(file_name_without_extension, program_id, operating_system)
 
         # Deploying phase
         allowed_choice = ['y', 'n', 'Y', 'N']
@@ -68,15 +72,11 @@ def compile_programs():
             print("Deploy compiled program? (y/n):")
             choice = input()
             if choice == "y" or choice == "Y":
-                program_id = _deploy_program(file_name_without_extension, operating_system)
+                _deploy_program(file_name_without_extension, operating_system)
             elif choice == "n" or choice == "N":
                 return
             else:
                 print('Please insert a valid choice.')
-
-        # Anchorpy initialization phase
-        if program_id: # If deploy succeed, initialize anchorpy
-            _initialize_anchorpy(file_name_without_extension, program_id, operating_system)
 
 
 
@@ -114,11 +114,11 @@ def _compile_program(program_name, operating_system, program):
         return False
 
     # Build phase
-    done = _perform_anchor_build(program_name, program, operating_system)
+    done, program_id = _perform_anchor_build(program_name, program, operating_system)
     if not done:
         return False
 
-    return True
+    return True, program_id
 
 def _perform_anchor_initialization(program_name, operating_system):
     # Define Anchor initialization commands to be executed
@@ -165,7 +165,7 @@ def _run_anchor_initialization_commands(operating_system, initialization_concate
 
 def _run_anchor_build_commands(program_name, program, operating_system, build_concatenated_command):
     print("Building Anchor program, this may take a while... Please be patient.")
-    _write_program_in_lib_rs(program_name, program)
+    program_id = _write_program_in_lib_rs(program_name, program)
     result = run_command(operating_system, build_concatenated_command)
     if result is None:
         print("Unsupported operating system.")
@@ -177,13 +177,14 @@ def _run_anchor_build_commands(program_name, program, operating_system, build_co
         if result.stderr:
             print(result.stderr)
 
-    return True # Sometimes stderr is just a warning, so we return true anyway
+    return True, program_id # Sometimes stderr is just a warning, so we return true anyway
 
 def _write_program_in_lib_rs(program_name, program):
-    program = _update_program_id(program_name, program)
+    program, program_id = _update_program_id(program_name, program)
     lib_rs_path = f"{anchor_base_path}/.anchor_files/{program_name}/anchor_environment/programs/anchor_environment/src/lib.rs"
     with open(lib_rs_path, 'w') as file:
         file.write(program)
+    return program_id
 
 def _update_program_id(program_name, program):
     file_path = f"{anchor_base_path}/.anchor_files/{program_name}/anchor_environment/programs/anchor_environment/src/lib.rs"
@@ -199,7 +200,7 @@ def _update_program_id(program_name, program):
 
     # Substitute program id in the file
     program = re.sub(r'declare_id!\s*\(\s*"([^"]+)"\s*\)\s*;', f'declare_id!("{new_program_id}");', program)
-    return program
+    return program, new_program_id
 
 def _impose_cargo_lock_version(program_name):
     file_path = f"{anchor_base_path}/.anchor_files/{program_name}/anchor_environment/Cargo.lock"
@@ -277,6 +278,28 @@ def _snake_to_camel(snake_str):
 
 
 # ====================================================
+# Anchorpy initialization phase functions
+# ====================================================
+
+def _initialize_anchorpy(program_name, program_id, operating_system):
+    idl_path = f"{anchor_base_path}/.anchor_files/{program_name}/anchor_environment/target/idl/{program_name}.json"
+    output_directory = f"{anchor_base_path}/.anchor_files/{program_name}/anchorpy_files/"
+    anchorpy_initialization_command = f"anchorpy client-gen {idl_path} {output_directory} --program-id {program_id}"
+
+    _run_initializing_anchorpy_commands(operating_system, anchorpy_initialization_command)
+
+def _run_initializing_anchorpy_commands(operating_system, anchorpy_initialization_command):
+    print("Initializing anchorpy...")
+    result = run_command(operating_system, anchorpy_initialization_command)
+    if result is None:
+        print("Unsupported operating system.")
+    elif result.stderr:
+        print(result.stderr)
+    else:
+        print("Anchorpy initialized successfully")
+
+
+# ====================================================
 # Deploying phase functions
 # ====================================================
 
@@ -301,9 +324,7 @@ def _deploy_program(program_name, operating_system):
     deploy_concatenated_command = " && ".join(deploy_commands)
 
     # Run Anchor deploy
-    program_id = _run_deploying_commands(operating_system, deploy_concatenated_command)
-
-    return program_id
+    _run_deploying_commands(operating_system, deploy_concatenated_command)
 
 def _modify_cluster_wallet(program_name, cluster, wallet_name):
     file_path = f"{anchor_base_path}/.anchor_files/{program_name}/anchor_environment/Anchor.toml"
@@ -347,25 +368,3 @@ def _get_deploy_details(output):
     signature = signature_match.group(1) if signature_match else None
 
     return program_id, signature
-
-
-# ====================================================
-# Anchorpy initialization phase functions
-# ====================================================
-
-def _initialize_anchorpy(program_name, program_id, operating_system):
-    idl_path = f"{anchor_base_path}/.anchor_files/{program_name}/anchor_environment/target/idl/{program_name}.json"
-    output_directory = f"{anchor_base_path}/.anchor_files/{program_name}/anchorpy_files/"
-    anchorpy_initialization_command = f"anchorpy client-gen {idl_path} {output_directory} --program-id {program_id}"
-
-    _run_initializing_anchorpy_commands(operating_system, anchorpy_initialization_command)
-
-def _run_initializing_anchorpy_commands(operating_system, anchorpy_initialization_command):
-    print("Initializing anchorpy...")
-    result = run_command(operating_system, anchorpy_initialization_command)
-    if result is None:
-        print("Unsupported operating system.")
-    elif result.stderr:
-        print(result.stderr)
-    else:
-        print("Anchorpy initialized successfully")

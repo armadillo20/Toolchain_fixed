@@ -96,9 +96,11 @@ def fetch_cluster(program_name):
     config = toml.load(file_path)
     cluster = config['provider']['cluster']
     if cluster == "Localnet" or cluster == "Devnet" or cluster == "Mainnet":
-        return cluster
+        return cluster, True
     else:
-        raise Exception("Cluster not found or not equal to the available choices")
+        print("The program hasn't been deployed with this toolchain. It won't be possible to send transaction.")
+        print('Proceeding to compute transaction size and fees...')
+        return 'Devnet', False
 
 def load_idl(file_path):
     with open(file_path, 'r') as f:

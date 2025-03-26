@@ -28,7 +28,7 @@ from solana_module.solana_utils import create_client, choose_wallet, load_keypai
 from solana_module.anchor_module.anchor_utils import find_required_accounts, find_signer_accounts, generate_pda, \
     find_args, check_type, convert_type, fetch_cluster, anchor_base_path, load_idl, choose_program, choose_instruction, \
     check_if_array
-from solana_module.anchor_module.transaction_manager import manage_transaction
+from solana_module.anchor_module.transaction_manager import build_transaction, measure_transaction_size, compute_transaction_fees, send_transaction
 
 
 # ====================================================
@@ -208,8 +208,45 @@ def _manage_provider(program_name, instruction, accounts, args, signer_account_k
         return True
     else:
         keypair = load_keypair_from_file(f"{solana_base_path}/solana_wallets/{chosen_wallet}")
-        cluster = fetch_cluster(program_name)
+        cluster, is_deployed = fetch_cluster(program_name)
         client = create_client(cluster)
         provider_wallet = Wallet(keypair)
         provider = Provider(client, provider_wallet)
-        return asyncio.run(manage_transaction(program_name, instruction, accounts, args, signer_account_keypairs, client, provider))
+        return asyncio.run(_manage_transaction(program_name, instruction, accounts, args, signer_account_keypairs, client, provider, is_deployed))
+
+async def _manage_transaction(program_name, instruction, accounts, args, signer_account_keypairs, client, provider, is_deployed):
+    # Build transaction
+    tx = await build_transaction(program_name, instruction, accounts, args, signer_account_keypairs, client, provider)
+    print('Transaction built. Computing size and fees...')
+
+    # Measure transaction size
+    transaction_size = measure_transaction_size(tx)
+    if transaction_size is None:
+        print('Error while measuring transaction size.')
+    else:
+        print(f"Transaction size: {transaction_size} bytes")
+
+    # Compute transaction fees
+    transaction_fees = await compute_transaction_fees(client, tx)
+    if transaction_fees is None:
+        print('Error while computing transaction fees.')
+    else:
+        print(f"Transaction fee: {transaction_fees} lamports")
+
+    if is_deployed:
+        allowed_choices = ['1','0']
+        choice = None
+        while choice not in allowed_choices:
+            print('Choose an option.')
+            print('1) Send transaction')
+            print('0) Go back to Anchor menu')
+            choice = input()
+            if choice == '1':
+                transaction = await send_transaction(provider, tx)
+                print(f'Transaction sent. Hash: {transaction}')
+            elif choice == '0':
+                return False
+            else:
+                print('Invalid option. Please choose a valid option.')
+    else:
+        return False

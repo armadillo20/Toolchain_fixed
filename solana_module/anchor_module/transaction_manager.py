@@ -34,40 +34,6 @@ from solana_module.anchor_module.anchor_utils import anchor_base_path
 # PUBLIC FUNCTIONS
 # ====================================================
 
-async def manage_transaction(program_name, instruction, accounts, args, signer_account_keypairs, client, provider):
-    # Build transaction
-    tx = await build_transaction(program_name, instruction, accounts, args, signer_account_keypairs, client, provider)
-    print('Transaction built. Computing size and fees...')
-
-    # Measure transaction size
-    transaction_size = measure_transaction_size(tx)
-    if transaction_size is None:
-        print('Error while measuring transaction size.')
-    else:
-        print(f"Transaction size: {transaction_size} bytes")
-
-    # Compute transaction fees
-    transaction_fees = await compute_transaction_fees(client, tx)
-    if transaction_fees is None:
-        print('Error while computing transaction fees.')
-    else:
-        print(f"Transaction fee: {transaction_fees} lamports")
-
-    allowed_choices = ['1','0']
-    choice = None
-    while choice not in allowed_choices:
-        print('Choose an option.')
-        print('1) Send transaction')
-        print('0) Go back to Anchor menu')
-        choice = input()
-        if choice == '1':
-            transaction = await send_transaction(provider, tx)
-            print(f'Transaction sent. Hash: {transaction}')
-        elif choice == '0':
-            return False
-        else:
-            print('Invalid option. Please choose a valid option.')
-
 async def build_transaction(program_name, instruction, accounts, args, signer_account_keypairs, client, provider):
     # Get instruction from anchorpy
     function = _import_function(program_name, instruction)
