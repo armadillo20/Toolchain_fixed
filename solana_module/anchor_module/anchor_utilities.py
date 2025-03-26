@@ -145,6 +145,24 @@ def close_anchor_program():
         else:
             print('Please insert a valid choice.')
 
+def remove_anchor_program():
+    chosen_program = choose_program()
+    if not chosen_program:
+        return
+
+    # Confirmation phase
+    allowed_choices = ['y', 'Y', 'n', 'N']
+    choice = None
+    while choice not in allowed_choices:
+        print('Are you sure you want to remove the program from the toolchain? (y/n)')
+        choice = input()
+        if choice == 'y' or choice == 'Y':
+            _remove_initialized_program(chosen_program)
+        elif choice == 'n' or choice == 'N':
+            return
+        else:
+            print('Please insert a valid choice.')
+
 
 
 

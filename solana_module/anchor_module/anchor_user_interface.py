@@ -24,7 +24,8 @@
 import asyncio
 from solana_module.anchor_module.automatic_data_insertion_manager import run_execution_trace
 from solana_module.anchor_module.anchor_utilities import choose_program_for_pda_generation, get_initialized_programs, \
-    get_program_instructions, get_instruction_args, get_instruction_accounts, close_anchor_program
+    get_program_instructions, get_instruction_args, get_instruction_accounts, close_anchor_program, \
+    remove_anchor_program
 from solana_module.anchor_module.program_compiler_and_deployer import compile_programs
 from solana_module.anchor_module.interactive_data_insertion_manager import choose_program_to_run
 
@@ -96,7 +97,8 @@ def _choose_utility():
         print("3) Get instruction accounts")
         print("4) Get instruction args")
         print("5) Generate PDA key")
-        print("6) Close and remove initialized Anchor program")
+        print("6) Remove initialized Anchor program")
+        print("7) Close and remove initialized Anchor program")
         print("0) Back to Anchor menu")
 
         # Manage choice
@@ -112,6 +114,8 @@ def _choose_utility():
         elif choice == "5":
             choose_program_for_pda_generation()
         elif choice == "6":
+            remove_anchor_program()
+        elif choice == "7":
             close_anchor_program()
         elif choice == "0":
             return
