@@ -26,8 +26,8 @@ from pathlib import Path
 import toml
 import shutil
 import os
-from solana_module.anchor_module.anchor_utils import find_initialized_programs, generate_pda, find_program_instructions, \
-    find_args, load_idl, anchor_base_path, check_type, find_required_accounts, find_signer_accounts, choose_program, \
+from solana_module.anchor_module.anchor_utils import fetch_initialized_programs, generate_pda, fetch_program_instructions, \
+    fetch_args, load_idl, anchor_base_path, check_type, fetch_required_accounts, fetch_signer_accounts, choose_program, \
     choose_instruction, check_if_array
 from solana_module.solana_utils import perform_program_closure
 
@@ -37,7 +37,7 @@ from solana_module.solana_utils import perform_program_closure
 # ====================================================
 
 def get_initialized_programs():
-    initialized_programs = find_initialized_programs()
+    initialized_programs = fetch_initialized_programs()
     if len(initialized_programs) == 0:
         print("No program has been initialized yet.")
     else:
@@ -52,7 +52,7 @@ def get_program_instructions():
     else:
         idl_file_path = f'{anchor_base_path}/.anchor_files/{chosen_program}/anchor_environment/target/idl/{chosen_program}.json'
         idl = load_idl(idl_file_path)
-        instructions = find_program_instructions(idl)
+        instructions = fetch_program_instructions(idl)
         if instructions is None:
             print("No instructions available for this program.")
         else:
@@ -71,8 +71,8 @@ def get_instruction_accounts():
         if not chosen_instruction:
             return
         else:
-            accounts = find_required_accounts(chosen_instruction, idl)
-            signer_accounts = find_signer_accounts(chosen_instruction, idl)
+            accounts = fetch_required_accounts(chosen_instruction, idl)
+            signer_accounts = fetch_signer_accounts(chosen_instruction, idl)
             if len(accounts) == 0:
                 print("No accounts required by this instruction.")
             else:
@@ -94,7 +94,7 @@ def get_instruction_args():
         if not chosen_instruction:
             return
         else:
-            args = find_args(chosen_instruction, idl)
+            args = fetch_args(chosen_instruction, idl)
             if len(args) == 0:
                 print("No arguments required by this instruction.")
             else:

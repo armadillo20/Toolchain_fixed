@@ -25,8 +25,8 @@
 import asyncio
 from anchorpy import Provider, Wallet
 from solana_module.solana_utils import create_client, choose_wallet, load_keypair_from_file, solana_base_path
-from solana_module.anchor_module.anchor_utils import find_required_accounts, find_signer_accounts, generate_pda, \
-    find_args, check_type, convert_type, fetch_cluster, anchor_base_path, load_idl, choose_program, choose_instruction, \
+from solana_module.anchor_module.anchor_utils import fetch_required_accounts, fetch_signer_accounts, generate_pda, \
+    fetch_args, check_type, convert_type, fetch_cluster, anchor_base_path, load_idl, choose_program, choose_instruction, \
     check_if_array
 from solana_module.anchor_module.transaction_manager import build_transaction, measure_transaction_size, compute_transaction_fees, send_transaction
 
@@ -69,8 +69,8 @@ def _choose_instruction_to_run(program_name):
     return False # Needed to come back to main menu after finishing
 
 def _setup_required_accounts(instruction, idl, program_name):
-    required_accounts = find_required_accounts(instruction, idl)
-    signer_accounts = find_signer_accounts(instruction, idl)
+    required_accounts = fetch_required_accounts(instruction, idl)
+    signer_accounts = fetch_signer_accounts(instruction, idl)
     final_accounts = dict()
     signer_accounts_keypairs = dict()
     repeat = True
@@ -119,7 +119,7 @@ def _setup_required_accounts(instruction, idl, program_name):
     return False
 
 def _setup_args(instruction, idl, program_name, accounts, signer_account_keypairs):
-    required_args = find_args(instruction, idl)
+    required_args = fetch_args(instruction, idl)
     repeat = _manage_args(required_args, program_name, instruction, accounts, signer_account_keypairs)
     if repeat:
         return True

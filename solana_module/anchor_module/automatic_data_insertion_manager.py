@@ -29,8 +29,8 @@ from anchorpy import Wallet, Provider
 from solana_module.anchor_module.transaction_manager import build_transaction, measure_transaction_size, \
     compute_transaction_fees, send_transaction
 from solana_module.solana_utils import load_keypair_from_file, solana_base_path, create_client, selection_menu
-from solana_module.anchor_module.anchor_utils import anchor_base_path, find_initialized_programs, \
-    find_program_instructions, find_required_accounts, find_signer_accounts, find_args, check_type, convert_type, \
+from solana_module.anchor_module.anchor_utils import anchor_base_path, fetch_initialized_programs, \
+    fetch_program_instructions, fetch_required_accounts, fetch_signer_accounts, fetch_args, check_type, convert_type, \
     fetch_cluster, load_idl, check_if_array
 
 
@@ -40,7 +40,7 @@ from solana_module.anchor_module.anchor_utils import anchor_base_path, find_init
 
 async def run_execution_trace():
     # Fetch initialized programs
-    initialized_programs = find_initialized_programs()
+    initialized_programs = fetch_initialized_programs()
     if len(initialized_programs) == 0:
         print("No program has been initialized yet.")
         return
@@ -71,14 +71,14 @@ async def run_execution_trace():
         # Manage instruction
         idl_file_path = f'{anchor_base_path}/.anchor_files/{program_name}/anchor_environment/target/idl/{program_name}.json'
         idl = load_idl(idl_file_path)
-        instructions = find_program_instructions(idl)
+        instructions = fetch_program_instructions(idl)
         instruction = execution_trace[2]
         if instruction not in instructions:
             print(f"Instruction {instruction} not found for the program {program_name} (execution trace {trace_id}).")
 
         # Manage accounts
-        required_accounts = find_required_accounts(instruction, idl)
-        signer_accounts = find_signer_accounts(instruction, idl)
+        required_accounts = fetch_required_accounts(instruction, idl)
+        signer_accounts = fetch_signer_accounts(instruction, idl)
         final_accounts = dict()
         signer_accounts_keypairs = dict()
         i = 3
@@ -105,7 +105,7 @@ async def run_execution_trace():
             i += 1
 
         # Manage args
-        required_args = find_args(instruction, idl)
+        required_args = fetch_args(instruction, idl)
         final_args = dict()
         for arg in required_args:
             # Manage arrays

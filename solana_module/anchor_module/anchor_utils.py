@@ -39,7 +39,7 @@ anchor_base_path = f"{solana_base_path}/anchor_module"
 # PUBLIC FUNCTIONS
 # ====================================================
 
-def find_initialized_programs():
+def fetch_initialized_programs():
     path_to_explore = f"{anchor_base_path}/.anchor_files"
     programs_with_anchorpy_files = []
 
@@ -59,14 +59,14 @@ def find_initialized_programs():
 
     return programs_with_anchorpy_files
 
-def find_program_instructions(idl):
+def fetch_program_instructions(idl):
     instructions = []
     # Extract instructions
     for instruction in idl['instructions']:
         instructions.append(instruction['name'])
     return instructions
 
-def find_required_accounts(instruction, idl):
+def fetch_required_accounts(instruction, idl):
     # Find the instruction in the IDL
     instruction_dict = next(instr for instr in idl['instructions'] if instr['name'] == instruction)
 
@@ -76,7 +76,7 @@ def find_required_accounts(instruction, idl):
     return required_accounts
 
 def choose_program():
-    programs = find_initialized_programs()
+    programs = fetch_initialized_programs()
     if not programs:
         print("No program has been initialized yet")
         return
@@ -84,7 +84,7 @@ def choose_program():
         return selection_menu('program', programs)
 
 def choose_instruction(idl):
-    instructions = find_program_instructions(idl)
+    instructions = fetch_program_instructions(idl)
     if not instructions:
         print("No instruction found for this program")
         return
@@ -106,7 +106,7 @@ def load_idl(file_path):
     with open(file_path, 'r') as f:
         return json.load(f)
 
-def find_signer_accounts(instruction, idl):
+def fetch_signer_accounts(instruction, idl):
     # Find the instruction in the IDL
     instruction_dict = next(instr for instr in idl['instructions'] if instr['name'] == instruction)
 
@@ -156,7 +156,7 @@ def generate_pda(program_name, launched_from_utilities):
 
     return pda_key
 
-def find_args(instruction, idl):
+def fetch_args(instruction, idl):
     # Find instruction
     instruction_dict = next(instr for instr in idl['instructions'] if instr['name'] == instruction)
 
