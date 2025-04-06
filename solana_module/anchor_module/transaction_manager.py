@@ -39,6 +39,10 @@ async def build_transaction(program_name, instruction, accounts, args, signer_ac
     function = _import_function(program_name, instruction)
     ix = _prepare_function(accounts, args, function)
 
+    # Get latest blockhash
+    resp = await client.get_latest_blockhash()
+    blockhash = resp.value.blockhash
+
     # If signature is required, sign transaction with signer_accounts
     keypairs = list(signer_account_keypairs.values())
     if keypairs:
@@ -46,7 +50,7 @@ async def build_transaction(program_name, instruction, accounts, args, signer_ac
         tx = Transaction().add(ix)
 
         # Get latest blockhash
-        tx.recent_blockhash = await _get_latest_blockhash(client)
+        tx.recent_blockhash = blockhash
 
         # If signature is required, sign transaction with signer_accounts
         keypairs = list(signer_account_keypairs.values())
@@ -56,7 +60,7 @@ async def build_transaction(program_name, instruction, accounts, args, signer_ac
             payer=provider.wallet.payer.pubkey(),
             instructions=[ix],
             address_lookup_table_accounts=[],
-            recent_blockhash=await _get_latest_blockhash(client)
+            recent_blockhash=blockhash
         )
 
         tx = VersionedTransaction(msg, [provider.wallet.payer])
@@ -151,7 +155,3 @@ def _prepare_function(accounts, args, function):
             ix = function()
 
     return  ix
-
-async def _get_latest_blockhash(client):
-    resp = await client.get_latest_blockhash()
-    return resp.value.blockhash
