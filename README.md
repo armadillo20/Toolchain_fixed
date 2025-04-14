@@ -31,12 +31,13 @@ Future extensions aim to support other blockchains and smart contract languages,
 - 📄 user_interface                          # Main program to run
 - 📁 images/                                 # Images from the thesis (see below)
 - 📁 solana_module/                          # Solana module
-  - 📄 requirements.txt                      # Python dependencies
+  - 📄 requirements.txt                      # Python dependencies for Solana module
   - 📄 solana_user_interface                 # User interface of Solana module
   - 📄 solana_utilities                      # Utility functions for Solana
   - 📄 solana_utils                          # Solana utils functions used by other packages
   - 📁 solana_wallets/                       # Wallets used for execution and testing
   - 📁 anchor_module/                        # Anchor Module
+    - 📄 requirements.txt                    # Python dependencies for Anchor module
     - 📄 anchor_user_interface               # User interface of Anchor module
     - 📄 program_compiler_and_deployer       # Package to compile and eventually deploy programs
     - 📄 interactive_data_insertion_manager  # Package which manage the interactive insertion of data to build contract calls
@@ -44,7 +45,7 @@ Future extensions aim to support other blockchains and smart contract languages,
     - 📄 transaction_manager                 # Package which manage size and fee computation, and transaction sending
     - 📄 anchor_utilities                    # Utility functions for Anchor
     - 📄 anchor_utils                        # Anchor utils functions used by other packages
-    - 📁 anchor_programs/                    # Smart contracts used in testing
+    - 📁 anchor_programs/                    # Smart contracts to compile
     - 📁 execution_traces/                   # CSV traces defining contract interactions
 
 ---
