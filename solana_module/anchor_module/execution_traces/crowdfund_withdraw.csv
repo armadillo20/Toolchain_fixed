@@ -1,0 +1,4 @@
+1;crowdfund;initialize;W:wallet1.json;P:8RkicowKCG6FcEbh8hT7wBGpyXYSFWiWtTphotH2kZ2P;kkk;395881939;1000;wallet1.json;true;
+2;crowdfund;donate;W:wallet2.json;P:8RkicowKCG6FcEbh8hT7wBGpyXYSFWiWtTphotH2kZ2P;P:GGj5QVYw5ZReLgfTmwXW3vhRntD2Dj9iwit7GfhSfxYc;kkk;1000;wallet1.json;true
+S:300
+3;crowdfund;withdraw;W:wallet1.json;P:8RkicowKCG6FcEbh8hT7wBGpyXYSFWiWtTphotH2kZ2P;kkk;wallet1.json;true
