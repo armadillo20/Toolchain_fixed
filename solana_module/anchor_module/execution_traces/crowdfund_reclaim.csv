@@ -1,0 +1,4 @@
+1;crowdfund;initialize;W:wallet1.json;P:3PYPsqCHahw6MiXAtrRwVAFcDSk1ER5dFEJs3UtWhsLE;pippo;396693840;1000;wallet1.json;true
+2;crowdfund;donate;W:wallet2.json;P:3PYPsqCHahw6MiXAtrRwVAFcDSk1ER5dFEJs3UtWhsLE;P:5xuXFgjWrrL79AmsAvUoGQooQBKZfKYewyZety7Er2g3;pippo;500;wallet1.json;true 
+S:100   
+3;crowdfund;reclaim;W:wallet2.json;P:3PYPsqCHahw6MiXAtrRwVAFcDSk1ER5dFEJs3UtWhsLE;P:5xuXFgjWrrL79AmsAvUoGQooQBKZfKYewyZety7Er2g3;pippo;wallet1.json;true
