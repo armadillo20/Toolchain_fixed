@@ -2,3 +2,6 @@
 2;price_bet;join;W:wallet3.json;W:wallet2.json;P:QT8JvpbYQjDLQDMARuG53nQtCi4jhWyzAf34kN5FVMs;W:wallet2.json;true
 S:200
 3;price_bet;timeout;W:wallet2.json;P:QT8JvpbYQjDLQDMARuG53nQtCi4jhWyzAf34kN5FVMs;wallet2.json;true
+4;price_bet;init;W:wallet1.json;P:mFuM4Z1kEAQmMKgB6j4TBqMrQGPBVpf9chTkNDseDka;500;100000;50;W:wallet1.json;true
+5;price_bet;join;W:wallet3.json;W:wallet1.json;P:mFuM4Z1kEAQmMKgB6j4TBqMrQGPBVpf9chTkNDseDka;W:wallet1.json;true
+6;price_bet;win;W:wallet3.json;W:wallet1.json;P:mFuM4Z1kEAQmMKgB6j4TBqMrQGPBVpf9chTkNDseDka;T:HovQMDrbAgAYPCmHVSrezcSmkMtXSSUsLDFANExrZh2J;W:wallet1.json;true
