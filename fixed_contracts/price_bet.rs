@@ -7,9 +7,10 @@ use std::str::FromStr;
 // https://www.quicknode.com/guides/solana-development/3rd-party-integrations/pyth-price-feeds
 // https://docs.rs/crate/pyth-sdk-solana/latest/source/src/lib.rs
 
-declare_id!("AAqJAPpoSnNFpHupRcCkDKDmxEsPNpzJcEQ7zX9CFEvS");
+declare_id!("68W9pL3ZCuvaBPZgJjHHTdb6dKsmwcurPJcnAXxsAQ5v");
 
 const BTC_USDC_FEED: &str = "HovQMDrbAgAYPCmHVSrezcSmkMtXSSUsLDFANExrZh2J"; // only for the devnet cluster
+const BTC_USDC_FEED_OWNER: &str = "gSbePebfvPy7tRqimPoVecS2UsBvYv46ynrzWocc92s"; // only for the devnet cluster
 
 #[program]
 pub mod price_bet {
@@ -68,15 +69,10 @@ pub mod price_bet {
 
     pub fn win(ctx: Context<WinCtx>) -> Result<()> {
         let bet_info = &mut ctx.accounts.bet_info;
-
         let price_account_info = &ctx.accounts.price_feed;
 
-        // Verifica che l'owner del price feed sia corretto
-        let expected_owner = Pubkey::from_str("gSbePebfvPy7tRqimPoVecS2UsBvYv46ynrzWocc92s")
-            .map_err(|_| CustomError::InvalidPriceFeedOwner)?;
-        
         require!(
-            *price_account_info.owner == expected_owner,
+            *price_account_info.owner == Pubkey::from_str(BTC_USDC_FEED_OWNER).unwrap(),
             CustomError::InvalidPriceFeedOwner
         );
 
@@ -85,39 +81,17 @@ pub mod price_bet {
             CustomError::DeadlineReached
         );
 
-        // Updated to use the new non-deprecated function
-        let price_feed = SolanaPriceAccount::account_info_to_feed(&price_account_info)
+        // Use the modern Pyth SDK API
+        let price_feed = SolanaPriceAccount::account_info_to_feed(price_account_info)
             .map_err(|_| CustomError::InvalidPriceFeed)?;
-        let current_timestamp = Clock::get()?.unix_timestamp;
         
-        // Staleness threshold in seconds
-        const STALENESS_THRESHOLD: u64 = 60;
-        
-        // Fixed: get_price_no_older_than returns Option<Price>, not Result
-        let current_price = price_feed
-            .get_price_no_older_than(current_timestamp, STALENESS_THRESHOLD)
-            .ok_or(CustomError::InvalidPriceFeed)?; // Convert Option to Result
+        // Get the current price without checking the refresh time
+        let current_price = price_feed.get_price_unchecked();
 
-        // Gestione sicura della conversione del prezzo
-        let price = if current_price.expo >= 0 {
-            u64::try_from(current_price.price)
-                .map_err(|_| CustomError::InvalidPriceFeed)?
-                * 10u64.pow(current_price.expo as u32)
-        } else {
-            u64::try_from(current_price.price)
-                .map_err(|_| CustomError::InvalidPriceFeed)?
-                / 10u64.pow((-current_price.expo) as u32)
-        };
-
-        let display_confidence = if current_price.expo >= 0 {
-            u64::try_from(current_price.conf)
-                .map_err(|_| CustomError::InvalidPriceFeed)?
-                * 10u64.pow(current_price.expo as u32)
-        } else {
-            u64::try_from(current_price.conf)
-                .map_err(|_| CustomError::InvalidPriceFeed)?
-                / 10u64.pow((-current_price.expo) as u32)
-        };
+        let price = u64::try_from(current_price.price).unwrap()
+            / 10u64.pow(u32::try_from(-current_price.expo).unwrap());
+        let display_confidence = u64::try_from(current_price.conf).unwrap()
+            / 10u64.pow(u32::try_from(-current_price.expo).unwrap());
 
         msg!("BTC/USD price: ({} +- {})", price, display_confidence);
 
@@ -206,10 +180,8 @@ pub struct WinCtx<'info> {
         bump,
     )]
     pub bet_info: Account<'info, OracleBetInfo>,
-    /// CHECK: This account is validated by checking its address matches BTC_USDC_FEED
-    #[account(
-        address = Pubkey::from_str(BTC_USDC_FEED).unwrap() @ CustomError::InvalidPriceFeed
-    )]
+    /// CHECK
+    #[account(address = Pubkey::from_str(BTC_USDC_FEED).unwrap() @ CustomError::InvalidPriceFeed)]
     pub price_feed: AccountInfo<'info>,
     pub system_program: Program<'info, System>,
 }
@@ -249,4 +221,7 @@ pub enum CustomError {
 
     #[msg("Invalid Price Feed Owner")]
     InvalidPriceFeedOwner,
+    
+    #[msg("Price not available")]
+    NoPriceAvailable,
 }
