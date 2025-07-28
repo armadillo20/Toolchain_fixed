@@ -1,0 +1,4 @@
+1;price_bet;init;W:wallet2.json;P:QT8JvpbYQjDLQDMARuG53nQtCi4jhWyzAf34kN5FVMs;100;100000;100000;W:wallet2.json;true
+2;price_bet;join;W:wallet3.json;W:wallet2.json;P:QT8JvpbYQjDLQDMARuG53nQtCi4jhWyzAf34kN5FVMs;W:wallet2.json;true
+S:200
+3;price_bet;timeout;W:wallet2.json;P:QT8JvpbYQjDLQDMARuG53nQtCi4jhWyzAf34kN5FVMs;wallet2.json;true
