@@ -1,0 +1,6 @@
+1;escrow;initialize;W:wallet1.json;W:wallet2.json;P:5QQajmEMEc2yBS9ZvYHTv4tbaeyceLSVod3PPN2CPmrD;100000;mmm;wallet1.json;true
+2;escrow;deposit;W:wallet2.json;W:wallet1.json;P:5QQajmEMEc2yBS9ZvYHTv4tbaeyceLSVod3PPN2CPmrD;mmm;wallet1.json;true
+3;escrow;refund;W:wallet1.json;W:wallet2.json;P:5QQajmEMEc2yBS9ZvYHTv4tbaeyceLSVod3PPN2CPmrD;mmm;wallet1.json;true
+4;escrow;initialize;W:wallet2.json;W:wallet1.json;P:CjrTwHwzjujA341anyR6JnhFzamvo9jdFnRU959fw8SD;100000;rrr;wallet2.json;true
+5;escrow;deposit;W:wallet1.json;W:wallet2.json;P:CjrTwHwzjujA341anyR6JnhFzamvo9jdFnRU959fw8SD;rrr;wallet2.json;true
+6;escrow;pay;W:wallet1.json;W:wallet2.json;P:CjrTwHwzjujA341anyR6JnhFzamvo9jdFnRU959fw8SD;rrr;wallet2.json;true   
