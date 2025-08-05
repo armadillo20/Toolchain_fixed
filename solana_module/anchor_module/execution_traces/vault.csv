@@ -1,0 +1,6 @@
+1;vault;initialize;W:wallet3.json;W:wallet1.json;P:HeBsQurJ2pEaVkmHWj7m3tBCVWXzDg1ajxVtg2GpB4y8;100;100000;W:wallet3.json;true
+2;vault;withdraw;W:wallet3.json;W:wallet3.json;P:HeBsQurJ2pEaVkmHWj7m3tBCVWXzDg1ajxVtg2GpB4y8;1000;W:wallet3.json;true
+3;vault;cancel;W:wallet1.json;W:wallet3.json;P:HeBsQurJ2pEaVkmHWj7m3tBCVWXzDg1ajxVtg2GpB4y8;W:wallet3.json;true
+4;vault;withdraw;W:wallet3.json;W:wallet3.json;P:HeBsQurJ2pEaVkmHWj7m3tBCVWXzDg1ajxVtg2GpB4y8;1000;W:wallet3.json;true
+S:150
+5;vault;finalize;W:wallet3.json;W:wallet3.json;P:HeBsQurJ2pEaVkmHWj7m3tBCVWXzDg1ajxVtg2GpB4y8;W:wallet3.json;true
