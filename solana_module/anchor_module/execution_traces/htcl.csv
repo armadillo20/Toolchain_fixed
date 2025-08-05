@@ -1,0 +1,5 @@
+1;htlc;initialize;W:wallet2.json;W:wallet3.json;P:2S3exENibGhQiVx1evGj8x44m8KwEbqgJMK5MomfFMq9;143 182 244 108 218 96 178 155 52 168 84 157 26 231 22 177 49 62 73 147 176 236 47 183 180 30 44 247 239 34 75 169;100;100;W:wallet2.json;TRUE;
+2;htlc;reveal;W:wallet2.json;W:wallet3.json;P:2S3exENibGhQiVx1evGj8x44m8KwEbqgJMK5MomfFMq9;ciao;W:wallet2.json;TRUE;
+3;htlc;initialize;W:wallet1.json;W:wallet2.json;P:DK3dAUymDMmDpR2fhryqqyxpkbB6xhV6Cs95JjrMDtpo;143 182 244 108 218 96 178 155 52 168 84 157 26 231 22 177 49 62 73 147 176 236 47 183 180 30 44 247 239 34 75 169;100;100;W:wallet1.json;TRUE;
+S:200
+4;htlc;timeout;W:wallet2.json;W:wallet1.json;P:DK3dAUymDMmDpR2fhryqqyxpkbB6xhV6Cs95JjrMDtpo;W:wallet1.json;TRUE;
