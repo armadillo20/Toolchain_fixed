@@ -1,0 +1,4 @@
+1;auction;start;W:wallet1.json;P:3doyHPfGSwmX56RZgPn8rED1tTQRM3EzEs55wLcQ3TGG;bottle;100;500;W:wallet2.json;true
+2;auction;bid;W:wallet2.json;P:3doyHPfGSwmX56RZgPn8rED1tTQRM3EzEs55wLcQ3TGG;W:wallet1.json;bottle;1000;W:wallet2.json;true
+S:150
+3;auction;end;W:wallet1.json;P:3doyHPfGSwmX56RZgPn8rED1tTQRM3EzEs55wLcQ3TGG;bottle;W:wallet1.json;true
