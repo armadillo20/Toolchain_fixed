@@ -199,11 +199,11 @@ async def run_execution_trace():
             size = measure_transaction_size(transaction)
             fees = await compute_transaction_fees(client_for_transaction, transaction)
 
-            # CSV building
-            csv_row = [trace_id, size, fees]
+            # CSV building - MODIFICA: Aggiungere il nome dell'operazione
+            csv_row = [trace_id, instruction, size, fees]
 
             i += 1
-            if execution_trace[i].lower() == 'true':
+            if str(execution_trace[i]).lower() == 'true':
                 if is_deployed:
                     transaction_hash = await send_transaction(provider, transaction)
                     csv_row.append(transaction_hash)
@@ -251,13 +251,14 @@ def _write_csv(file_name, results):
     # Create folder if it doesn't exist
     os.makedirs(folder, exist_ok=True)
 
-    # Write CSV file with headers
+    # Write CSV file with headers - MODIFICA: Aggiungere header per operazione
     with open(csv_file, mode='w', newline='') as file:
         csv_writer = csv.writer(file)
         
         # Write header row with field descriptions
         header = [
             'Trace_ID',
+            'Operation_Name',
             'Transaction_Size_Bytes', 
             'Transaction_Fees_Lamports',
             'Transaction_Hash_or_Status'
