@@ -1,4 +1,4 @@
-# MIT License
+    # MIT License
 #
 # Copyright (c) 2025 Manuel Boi - Università degli Studi di Cagliari
 #
@@ -27,7 +27,7 @@ from anchorpy import Provider, Wallet
 from solana_module.solana_utils import create_client, choose_wallet, load_keypair_from_file, solana_base_path
 from solana_module.anchor_module.anchor_utils import fetch_required_accounts, fetch_signer_accounts, generate_pda, \
     fetch_args, check_type, convert_type, fetch_cluster, anchor_base_path, load_idl, choose_program, choose_instruction, \
-    check_if_array , check_if_vec
+    check_if_array , check_if_vec , input_token_account_manually ,check_if_bytes_type
 from solana_module.anchor_module.transaction_manager import build_transaction, measure_transaction_size, compute_transaction_fees, send_transaction
 
 # ====================================================
@@ -78,6 +78,10 @@ def _setup_required_accounts(instruction, idl, program_name):
     while repeat:
         while i < len(required_accounts):
             required_account = required_accounts[i]
+          
+            
+
+
             print(f"\nNow working with {required_account} account.")
             print("Is this account a Wallet, a PDA, or a Token Account?")
             print(f"1) Wallet")
@@ -98,12 +102,13 @@ def _setup_required_accounts(instruction, idl, program_name):
                     print(f"{required_account} account added.")
                     i += 1
             elif choice == '2':
+                
                 pda_key = generate_pda(program_name, False)
                 if pda_key is not None:
                     final_accounts[required_account] = pda_key
                     i += 1
             elif choice == '3':
-                token_account_key = _input_token_account_manually()
+                token_account_key = input_token_account_manually()
                 if token_account_key is not None:
                     final_accounts[required_account] = token_account_key
                     print(f"{required_account} token account added.")
@@ -388,7 +393,7 @@ def _manage_args(args, program_name, instruction, accounts, signer_account_keypa
             arg = args[i]
             print(f"Insert {arg['name']} value. ", end="", flush=True)
 
-            # Arrays management
+        
             vec_type = check_if_vec(arg)
             array_type, array_length = check_if_array(arg)
             if array_type is None and array_length is not None:
@@ -464,13 +469,19 @@ def _manage_args(args, program_name, instruction, accounts, signer_account_keypa
                     else:
                         i -= 1
                 else:
-                    converted_value = convert_type(type, text_input)
-                    if converted_value is not None:
-                        final_args[arg['name']] = converted_value
-                        i += 1
-                    else:
-                        print("Invalid input. Please try again.")
-                        continue
+                    if type == "bytes":              
+                            aux = text_input.encode('utf-8')
+                            final_args[arg['name']] = aux
+                            i += 1
+
+                    else:    
+                        converted_value = convert_type(type, text_input)
+                        if converted_value is not None:
+                            final_args[arg['name']] = converted_value
+                            i += 1
+                        else:
+                            print("Invalid input. Please try again.")
+                            continue
 
         repeat = _manage_provider(program_name, instruction, accounts, final_args, signer_account_keypairs, remaining_accounts)
         if i == 0:
