@@ -9,7 +9,7 @@ from solana_module.anchor_module.transaction_manager import build_transaction, m
 from solana_module.solana_utils import load_keypair_from_file, solana_base_path, create_client, selection_menu
 from solana_module.anchor_module.anchor_utils import anchor_base_path, fetch_initialized_programs, \
     fetch_program_instructions, fetch_required_accounts, fetch_signer_accounts, fetch_args, check_type, convert_type, \
-    fetch_cluster, load_idl, check_if_array
+    fetch_cluster, load_idl, check_if_array , check_if_vec
 
 from spl.token.async_client import AsyncToken
 from spl.token.constants import ASSOCIATED_TOKEN_PROGRAM_ID
@@ -38,7 +38,7 @@ async def run_execution_trace():
     # Create async client outside the loop
     client = AsyncClient("https://api.devnet.solana.com")
 
-    try:  # CORREZIONE: Aggiungere try-finally per garantire la chiusura del client
+    try:
         # For each execution trace
         for index, row in enumerate(csv_file, start=1):
             # Check if it's a slot waiting command
@@ -46,17 +46,14 @@ async def run_execution_trace():
                 extracted_key = row[0].removeprefix('S:').strip()
                 target_slot = int(extracted_key)
 
-                # Await the async call
                 first_response = await client.get_slot()
                 first_current_slot = first_response.value
-
                 target_end_slot = first_current_slot + target_slot
 
                 print(f"Waiting for slot {target_slot} ...")
 
                 while True:
                     try:
-                        # Await the async call
                         response = await client.get_slot()
                         current_slot = response.value
                         current_value = target_end_slot - current_slot
@@ -66,21 +63,17 @@ async def run_execution_trace():
                             break
 
                         print(f"Current slot: {target_slot - current_value}, target slot: {target_slot}")
-                        
-                        # Use asyncio.sleep instead of time.sleep for async functions
                         await asyncio.sleep(1)
 
                     except Exception as e:
                         print(f"Error checking slot: {e}")
                         await asyncio.sleep(2)
 
-                continue  # Skip to next iteration
+                continue
 
             # Normal execution trace processing
             execution_trace = [x.strip() for x in re.split(r"[;,]", row[0])]
 
-           
-            
             # Get execution trace ID
             trace_id = execution_trace[0]
             print(f"Working on execution trace with ID {trace_id}...")
@@ -104,6 +97,11 @@ async def run_execution_trace():
             signer_accounts = fetch_signer_accounts(instruction, idl)
             final_accounts = dict()
             signer_accounts_keypairs = dict()
+            
+            # Initialize remaining accounts list
+            remaining_accounts = []
+            from solders.instruction import AccountMeta
+            
             i = 3
             for account in required_accounts:
                 # If it is a wallet
@@ -145,12 +143,33 @@ async def run_execution_trace():
                     return
                 i += 1
 
+            # FIXED: Process remaining accounts after required accounts
+            # Continue processing remaining accounts (R: prefix)
+            while i < len(execution_trace) and execution_trace[i].startswith("R:"):
+                wallet_name = execution_trace[i].removeprefix('R:')
+                file_path = f"{solana_base_path}/solana_wallets/{wallet_name}"
+                keypair = load_keypair_from_file(file_path)
+                if keypair is None:
+                    print(f"Wallet for remaining account not found at path {file_path}.,remember to put the remaning accounts right after the reequired ones")
+                    return
+                
+                pubkey = keypair.pubkey()
+                new_account_meta = AccountMeta(
+                    pubkey=pubkey,
+                    is_signer=False,  # Remaining accounts are typically non-signers
+                    is_writable=False
+                )
+                remaining_accounts.append(new_account_meta)
+                print(f"✓ Remaining account added as payee: {pubkey}")
+                i += 1
+
             # Manage args
             required_args = fetch_args(instruction, idl)
             final_args = dict()
             for arg in required_args:
                 # Manage arrays
                 array_type, array_length = check_if_array(arg)
+                vec_type = check_if_vec(arg)
                 if array_type is not None and array_length is not None:
                     array_values = execution_trace[i].split()
 
@@ -166,7 +185,26 @@ async def run_execution_trace():
                         if converted_value is not None:
                             valid_values.append(converted_value)
                         else:
-                            print(f"Invalid input at index {j}. Please try again.")
+                            print(f"Invalid input at index {j} in the array. Please try again.")
+                            return
+
+                    final_args[arg['name']] = valid_values
+                #vectors handling
+                elif vec_type is not None:
+                    vec_values = execution_trace[i].split()
+                    #check if vec has more than zero 
+                    if len(vec_values) == 0:
+                        print("vec cannot have zero elements")
+                        return
+                    
+                    # Convert vec elements basing on the type
+                    valid_values = []
+                    for j in range(len(vec_values)):
+                        converted_value = convert_type(vec_type, vec_values[j])
+                        if converted_value is not None:
+                            valid_values.append(converted_value)
+                        else:
+                            print(f"Invalid input at index {j} in the vector. Please try again.")
                             return
 
                     final_args[arg['name']] = valid_values
@@ -177,8 +215,14 @@ async def run_execution_trace():
                     if type is None:
                         print(f"Unsupported type for arg {arg['name']}")
                         return
-                    converted_value = convert_type(type, execution_trace[i])
-                    final_args[arg['name']] = converted_value
+
+                    if type == "bytes":              
+                            aux = execution_trace[i].encode('utf-8')
+                            final_args[arg['name']] = aux
+                            
+                    else:
+                        converted_value = convert_type(type, execution_trace[i])
+                        final_args[arg['name']] = converted_value
 
                 i += 1
 
@@ -188,18 +232,17 @@ async def run_execution_trace():
             if keypair is None:
                 print("Provider wallet not found.")
             cluster, is_deployed = fetch_cluster(program_name)
-            # NOTA: Qui crei un nuovo client, ma stai già usando quello async per gli slot
-            client_for_transaction = create_client(cluster)  # Rinominato per chiarezza
+            client_for_transaction = create_client(cluster)
             provider_wallet = Wallet(keypair)
             provider = Provider(client_for_transaction, provider_wallet)
 
-            # Manage transaction
+            # FIXED: Pass remaining_accounts to build_transaction
             transaction = await build_transaction(program_name, instruction, final_accounts, final_args, 
-                                                signer_accounts_keypairs, client_for_transaction, provider)
+                                                signer_accounts_keypairs, client_for_transaction, provider, remaining_accounts)
             size = measure_transaction_size(transaction)
             fees = await compute_transaction_fees(client_for_transaction, transaction)
 
-            # CSV building - MODIFICA: Aggiungere il nome dell'operazione
+            # CSV building
             csv_row = [trace_id, instruction, size, fees]
 
             i += 1
@@ -215,7 +258,6 @@ async def run_execution_trace():
             print(f"Execution trace {index} results computed!")
 
     finally:
-        # CORREZIONE: Chiudere il client alla fine, fuori dal loop
         await client.close()
 
     # CSV writing
