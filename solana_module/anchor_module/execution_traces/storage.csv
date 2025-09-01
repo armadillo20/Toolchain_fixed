@@ -1,0 +1,3 @@
+1;storage;initialize;W:wallet2.json;P:Fe2LEm4GyPfDzCMH17iJCkUJH8ruM2jdhkhtZnxWoN3N;P:GaGe1ReF736YgsJ4UzTKNAX1uz3xsvJxEEh97B3FUtzc;W:wallet2.json;true
+2;storage;store_string;W:wallet2.json;P:Fe2LEm4GyPfDzCMH17iJCkUJH8ruM2jdhkhtZnxWoN3N;myw;wallet2.json;true
+3;storage;store_bytes;W:wallet2.json;P:GaGe1ReF736YgsJ4UzTKNAX1uz3xsvJxEEh97B3FUtzc;111;wallet2.json;true
