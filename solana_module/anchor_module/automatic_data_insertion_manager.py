@@ -44,6 +44,7 @@ async def run_execution_trace():
             # Check if it's a slot waiting command
             if row[0].startswith("S:"):
                 extracted_key = row[0].removeprefix('S:').strip()
+                print(f"\n\nthis is my extracted key {extracted_key}\n\n")
                 target_slot = int(extracted_key)
 
                 first_response = await client.get_slot()
