@@ -1,0 +1,31 @@
+{
+  "network": "devnet*",
+  "platform": "Solana",
+  "trace_title": "storage_results",
+  "actions": [
+    {
+      "sequence_id": "1",
+      "function_name": "initialize",
+      "transaction_size_bytes": 277,
+      "transaction_fees_lamports": 5000,
+      "transaction_hash": "5f3yL5a2dcw2TukkL6VoFxZ7SRcHj1jnvHRaX6xy2DCtBjQ8hd1cGWvpDjBz2uuZec9ocV5RvMd1qEL91oB7ZfW1",
+      "execution_time_in_slots": 4
+    },
+    {
+      "sequence_id": "2",
+      "function_name": "store_string",
+      "transaction_size_bytes": 249,
+      "transaction_fees_lamports": 5000,
+      "transaction_hash": "3eYASkoFnujNHs3bvUPbHjKKjnCcGJhreUN5XAB4Cc3FeKBzZ3gv2vF9Xm5LJ5qzwPtU7pihmShinnS1pyihQbTX",
+      "execution_time_in_slots": 0
+    },
+    {
+      "sequence_id": "3",
+      "function_name": "store_bytes",
+      "transaction_size_bytes": 251,
+      "transaction_fees_lamports": 5000,
+      "transaction_hash": "4ZvLDtXibKevznF2DoiPgvqGkSTzVWwwL32FbmoN1f1PBpFVwkUZgUb8cay9vsXrbkv6zSvYQfJUNQaqepJX9n8Q",
+      "execution_time_in_slots": 3
+    }
+  ]
+}
