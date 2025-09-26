@@ -1,0 +1,79 @@
+{
+  "trace_title": "storage",
+  "trace_actors": [
+    "user"
+    ],
+  "configuration": {
+    "solana": {},
+    "evm": {},
+    "tezos": {},
+    "cardano": {}
+  },
+  "trace_execution": [
+    {
+      "sequence_id": "1",
+      "function_name": "initialize",
+      "waiting_time": 0,
+      "actors": [
+        "user"
+      ],
+      "args": {},
+      "tezos": {},
+      "cardano": {},
+      "evm": {},
+      "solana": {
+        "string_storage_pda": { "opt" : "s",
+                          "param" :["storage_string","user" ]},
+        "bytes_storage_dpa": { "opt" : "s",
+                          "param" :["storage_bytes","user" ]},
+        "provider_wallet": "user",
+        "send_transaction": true
+                          
+
+      }
+    } ,
+     {
+      "sequence_id": "2",
+      "function_name": "store_string",
+      "waiting_time": 0,
+      "actors": [
+        "user"
+      ],
+      "args": {"data_to_store" : "m"},
+      "tezos": {},
+      "cardano": {},
+      "evm": {},
+      "solana": {
+        "string_storage_pda": { "opt" : "s",
+                          "param" :["storage_string","user"]},
+        "provider_wallet": "user",
+        
+        "send_transaction": true
+                          
+
+      }
+    } ,
+    {
+      "sequence_id": "3",
+      "function_name": "store_bytes",
+      "waiting_time": 0,
+      "actors": [
+        "user"
+      ],
+      "args": {"data_to_store" : "111"},
+      "tezos": {},
+      "cardano": {},
+      "evm": {},
+      "solana": {
+        "bytes_storage_dpa": { "opt" : "s",
+                          "param" :["storage_bytes","user" ]},
+        "provider_wallet": "user",
+        "data_to_store" : "111",
+        "send_transaction": true
+                          
+
+      }
+    }
+  ]
+}
+
