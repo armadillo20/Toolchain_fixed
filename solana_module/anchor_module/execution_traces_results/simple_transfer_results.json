@@ -1,0 +1,23 @@
+{
+  "network": "devnet*",
+  "platform": "Solana",
+  "trace_title": "simple_transfer_results",
+  "actions": [
+    {
+      "sequence_id": "1",
+      "function_name": "deposit",
+      "transaction_size_bytes": 285,
+      "transaction_fees_lamports": 5000,
+      "transaction_hash": "61N7Fbu8UXt3xoSB3mankg75Pimi8V2zQ8P3teR5QHZzpS11GzvLQsEP7a6TPp79JRuvBCkFnEb1HQzuCQowYWD1",
+      "execution_time_in_slots": 3
+    },
+    {
+      "sequence_id": "2",
+      "function_name": "withdraw",
+      "transaction_size_bytes": 285,
+      "transaction_fees_lamports": 5000,
+      "transaction_hash": "2DL7FFRmP2fQkxNQt7M9aeR5zYJyf6V1ZHrpmGffBo52QuWJSVni5FTTBSFqPr8FUxb6RfNKtpwP4F83iYjif5eF",
+      "execution_time_in_slots": 1
+    }
+  ]
+}
