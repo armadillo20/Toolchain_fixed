@@ -1,0 +1,23 @@
+{
+  "network": "devnet*",
+  "platform": "Solana",
+  "trace_title": "vesting_results",
+  "actions": [
+    {
+      "sequence_id": "1",
+      "function_name": "initialize",
+      "transaction_size_bytes": 301,
+      "transaction_fees_lamports": 5000,
+      "transaction_hash": "eYC2mMW9TSTumwPXDxmvBccwcxW4X7xWEvyEgJB319xjV4yNcFbw5Ww7hsnfnn4xb41a64EndzQTGHsiJhumPv9",
+      "execution_time_in_slots": 2
+    },
+    {
+      "sequence_id": "2",
+      "function_name": "release",
+      "transaction_size_bytes": 244,
+      "transaction_fees_lamports": 5000,
+      "transaction_hash": "3WUCcqNC3YKF29JNxTXeEokwf9KKh4JnDTrpfLBJYQ7tc1rbSdPha9GE6UNkF4qdJmpmqv48sVf5CddKUeJdnLHJ",
+      "execution_time_in_slots": 1
+    }
+  ]
+}
