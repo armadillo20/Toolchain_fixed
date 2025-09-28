@@ -1,0 +1,39 @@
+{
+  "network": "devnet*",
+  "platform": "Solana",
+  "trace_title": "htlc_results",
+  "actions": [
+    {
+      "sequence_id": "1",
+      "function_name": "initialize",
+      "transaction_size_bytes": 325,
+      "transaction_fees_lamports": 5000,
+      "transaction_hash": "2zF94LPK3gq9PKu8wZDZEQQtvaaEWni4w6MahZoyo9hctsQtfbeMUF9P5MgyWCgNXC5PbRkEbkbWJZzZVaAAukwo",
+      "execution_time_in_slots": 1
+    },
+    {
+      "sequence_id": "2",
+      "function_name": "reveal",
+      "transaction_size_bytes": 252,
+      "transaction_fees_lamports": 5000,
+      "transaction_hash": "259ju6jDi1C866orTJURQoWCGufbb4wYkZ5imutgRGa6VEFHeUrsj8C9513bZAesmD8vdqTXSq4vifLGbv743ibK",
+      "execution_time_in_slots": 2
+    },
+    {
+      "sequence_id": "3",
+      "function_name": "initialize",
+      "transaction_size_bytes": 325,
+      "transaction_fees_lamports": 5000,
+      "transaction_hash": "4nbY8KBaVYX5tSJJrSHKcVB1FCqtpJT49G8LPGGe612yyqVWkVFGykcG8H9c6YFDoVyBgHYoixBSCbwmVZDt3CeN",
+      "execution_time_in_slots": 1
+    },
+    {
+      "sequence_id": "4",
+      "function_name": "timeout",
+      "transaction_size_bytes": 244,
+      "transaction_fees_lamports": 5000,
+      "transaction_hash": "Dr4c4NPyGCeGzkxtwKWxPK6F4hWynCbYHBRBV4E8JwCCdXVDkFrZJhv6m2RdrDtZ6QLWAcJ3bsR3i7RJ291WGxn",
+      "execution_time_in_slots": 3
+    }
+  ]
+}
