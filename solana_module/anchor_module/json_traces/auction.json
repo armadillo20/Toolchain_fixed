@@ -5,7 +5,7 @@
     "bidder"
   ],
   "configuration": {
-    "solana": {},
+    "solana": {"use" : "True"},
     "evm": {},
     "tezos": {},
     "cardano": {}
@@ -18,7 +18,7 @@
       "actors": [
         "seller"
       ],
-      "args": [],
+      "args": {},
       "tezos": {},
       "cardano": {},
       "evm": {},
@@ -41,7 +41,7 @@
       "actors": [
         "seller"
       ],
-      "args": [],
+      "args": {},
       "tezos": {},
       "cardano": {},
       "evm": {},
@@ -62,7 +62,7 @@
       "actors": [
         "bidder"
       ],
-      "args": [],
+      "args": {},
       "tezos": {},
       "cardano": {},
       "evm": {},
