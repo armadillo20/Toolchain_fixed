@@ -7,7 +7,7 @@
     
     ],
   "configuration": {
-    "solana": {},
+    "solana": {"use" : "True"},
     "evm": {},
     "tezos": {},
     "cardano": {}
